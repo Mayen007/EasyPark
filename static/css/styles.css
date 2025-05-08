@@ -131,156 +131,16 @@ h6 {
   margin: 15px auto;
 }
 
-.team-card {
-  border: none;
-  transition: transform 0.3s ease;
-}
-
-.team-card:hover {
-  transform: translateY(-10px);
-}
-
 footer {
   background: var(--secondary-color);
 }
 
-.press-logo {
-  filter: grayscale(100%);
-  opacity: 0.7;
-  transition: all 0.3s ease;
-  padding: 1rem;
-  max-width: 150px;
-  margin: 0 auto;
-}
-
-.press-logo:hover {
-  filter: grayscale(0%);
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-.press-logo img {
-  max-height: 40px;
-  width: auto;
-  object-fit: contain;
-}
-
-.timeline-list {
-  list-style: none;
-  padding-left: 1.5rem;
-}
-
-.timeline-list li {
-  position: relative;
-  margin-bottom: 0.8rem;
-}
-
-.timeline-list li::before {
-  content: "▹";
-  position: absolute;
-  left: -1.5rem;
+footer a {
   color: var(--primary-color);
-}
-
-.story-visual {
-  position: relative;
-  overflow: hidden;
-  border-radius: 1rem;
-}
-
-.img-caption {
-  font-size: 0.9rem;
-  text-align: center;
-  opacity: 0.8;
-}
-
-.team-card {
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  max-height: 500px;
-}
-
-.team-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-}
-
-.card-image {
-  position: relative;
-  overflow: hidden;
-  height: 300px;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.team-card:hover img {
-  transform: scale(1.05);
-}
-
-.social-links {
-  position: absolute;
-  bottom: -50px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  transition: bottom 0.3s;
-}
-
-.team-card:hover .social-links {
-  bottom: 20px;
-}
-
-.social-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--secondary-color);
-  transition: all 0.3s;
   text-decoration: none;
+  transition: all 0.3s ease;
 }
 
-.social-icon:hover {
-  background: var(--primary-color);
-  color: #fff;
-  transform: translateY(-3px);
-}
-
-.card-info {
-  padding: 1rem;
-  text-align: center;
-}
-
-.member-name {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--secondary-color);
-}
-
-.member-role {
-  color: var(--primary-color);
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.member-bio {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
 
 .plans-hero {
   background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
@@ -531,27 +391,6 @@ input:checked+.pricing-slider:before {
   .section-title {
     font-size: 1.8rem;
     text-align: center !important;
-  }
-
-  .press-logos .row {
-    gap: 2rem;
-  }
-
-  .timeline-list li {
-    padding-bottom: 1rem;
-  }
-
-  .team-card {
-    max-width: 280px;
-    margin: 0 auto;
-  }
-
-  .mission {
-    flex-direction: column-reverse;
-  }
-
-  .comparison-table {
-    font-size: 0.9rem;
   }
 
   .plan-header h5 {

@@ -1,232 +1,476 @@
 {% extends "base.html" %}
 {% block title %}About Us - EASY PARK{% endblock %}
+
+{% block extra_head %}
+<style>
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .about-hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("{{ url_for('static', filename='img/hero-1.jpg') }}");
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 8rem 0 6rem;
+    margin-bottom: 5rem;
+    position: relative;
+  }
+
+  .section-spacing {
+    margin-bottom: 6rem;
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Story Visual */
+  .story-visual {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    transform: rotate(2deg);
+    transition: all 0.5s ease;
+  }
+
+  .story-visual:hover {
+    transform: rotate(0);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Timeline */
+  .timeline-item {
+    position: relative;
+    padding-left: 2.5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+  }
+
+  .timeline-item:hover {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+
+  .timeline-item:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+  }
+
+  .timeline-item:after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1rem;
+    bottom: -1.5rem;
+    width: 2px;
+    background-color: var(--primary-color);
+    opacity: 0.3;
+  }
+
+  .timeline-item:last-child:after {
+    display: none;
+  }
+
+  .timeline-year {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+  }
+
+  /* Mission & Vision Cards */
+  .mission-vision-card {
+    height: 100%;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
+    overflow: hidden;
+    position: relative;
+    padding: 3rem;
+  }
+
+  .mission-vision-card:hover {
+    transform: translateY(-10px);
+  }
+
+  .mission-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: var(--secondary-color);
+    font-size: 1.8rem;
+  }
+
+  .mission-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .mission-list li {
+    padding: 8px 0;
+    position: relative;
+    padding-left: 28px;
+  }
+
+  .mission-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+
+  /* Team Section */
+  .team-member {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
+  }
+
+  .team-member:hover {
+    transform: translateY(-10px);
+  }
+
+  .member-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    padding: 2rem 1.5rem;
+    color: white;
+  }
+
+  .member-role {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 0.25rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .social-links-alt {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .social-link {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+
+  .social-link:hover {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    transform: translateY(-3px);
+  }
+
+  /* CTA Section */
+  .cta-container {
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
+    url("{{ url_for('static', filename='img/cta-bg.jpg') }}") no-repeat center center;
+    background-size: cover;
+    padding: 2rem;
+  }
+
+  .cta-bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary-color), #323232);
+    opacity: 0.85;
+  }
+
+  .cta-badge {
+    display: inline-block;
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 30px;
+    margin-bottom: 1rem;
+  }
+
+  .cta-buttons {
+    margin-bottom: 2rem;
+  }
+
+  .cta-feature {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .cta-feature i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .story-visual {
+      transform: none;
+    }
+
+    .cta-buttons .btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      margin-right: 0 !important;
+    }
+
+    .cta-buttons .btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .cta-buttons .btn:last-child {
+      margin-right: 0;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<main class="flex-grow-1 bg-white">
-  <section class="hero-section mt-5">
-    <div class="hero-content">
-      <h1 class="display-4 fw-bold fs-1">About Us</h1>
-      <p class="lead fs-3 mt-3">Innovating the Parking Experience</p>
-    </div>
-  </section>
-  <section class="container py-4">
-    <div class="row align-items-center mb-4">
-      <div class="col-md-6 mb-4 mb-md-0">
-        <h2 class="section-title text-start mb-4 text-center">Our Story</h2>
-        <div class="text-muted">
-          <p class="lead">Founded in 2020 with a passion to simplify urban parking, EASY PARK emerged from personal
-            frustration with traditional parking systems.</p>
+<!-- Hero Section -->
+<section class="about-hero text-center">
+  <div class="container">
+    <h1 class="display-3 fw-bold mb-4">Our Story</h1>
+    <p class="lead fs-4 mb-0 mx-auto" style="max-width: 700px;">Transforming urban parking experiences since 2020</p>
+  </div>
+</section>
 
-          <p>Our journey began in Nairobi's bustling CBD, where our founders experienced firsthand the challenges of
-            finding reliable parking. What started as a university project has now transformed into Kenya's leading
-            parking solution platform.</p>
+<!-- Story Section -->
+<section class="container section-spacing">
+  <div class="row align-items-center gx-5">
+    <div class="col-lg-6 mb-5 mb-lg-0">
+      <p class="section-subtitle">Who We Are</p>
+      <h2 class="display-5 fw-bold mb-4">From Frustration to Innovation</h2>
 
-          <div class="mt-4">
-            <h5 class="fw-bold">Key Milestones</h5>
-            <ul class="timeline-list">
-              <li>2020: Launched MVP with 5 parking lots</li>
-              <li>2021: Reached 10,000 active users</li>
-              <li>2022: Expanded to 3 major cities</li>
-              <li>2023: Won National Innovation Award</li>
-            </ul>
+      <p class="lead mb-4">Founded in 2020 with a passion to simplify urban parking, EASY PARK emerged from personal
+        frustration with traditional parking systems.</p>
+
+      <p class="mb-4">Our journey began in Nairobi's bustling CBD, where our founders experienced firsthand the
+        challenges of
+        finding reliable parking. What started as a university project has now transformed into Kenya's leading
+        parking solution platform.</p>
+
+      <div class="mt-5">
+        <h5 class="fw-bold mb-4">Our Growth Journey</h5>
+        <div class="timeline-container">
+          <div class="timeline-item">
+            <span class="timeline-year">2020</span>
+            <span>Launched MVP with 5 parking lots in Nairobi CBD</span>
           </div>
-
-          <a href="/about" class="btn btn-outline-warning mt-3">Read Full Story</a>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="story-visual">
-          <img src="{{ url_for('static', filename='img/story.svg') }}"
-            alt="EASY PARK's journey from concept to leading parking platform" class="img-fluid rounded-3"
-            loading="lazy">
-          <div class="img-caption text-muted mt-2"></div>
+          <div class="timeline-item">
+            <span class="timeline-year">2022</span>
+            <span>Expanded operations to Mombasa and Kisumu</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">2024</span>
+            <span>Secured $2M funding to expand across East Africa</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="row align-items-center mission">
-      <div class="col-md-6">
-        <img src="{{ url_for('static', filename='img/about.png') }}" alt="Our Office" class="img-fluid rounded"
+
+    <div class="col-lg-6">
+      <div class="story-visual">
+        <img src="{{ url_for('static', filename='img/story.svg') }}"
+          alt="EASY PARK's journey from concept to leading parking platform" class="img-fluid">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Mission & Vision Section -->
+<section class="container section-spacing">
+  <div class="text-center mb-5">
+    <p class="section-subtitle">Our Purpose</p>
+    <h2 class="display-5 fw-bold">Driving Our Vision Forward</h2>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="mission-vision-card bg-dark text-white">
+        <div class="mission-icon bg-warning">
+          <i class="bi bi-rocket-takeoff"></i>
+        </div>
+        <h3 class="fw-bold mb-4">Our Mission</h3>
+        <p class="mb-4">To revolutionize urban parking by providing a reliable, user-friendly platform that saves
+          time, reduces stress, and enhances the overall urban experience for drivers everywhere.</p>
+        <ul class="mission-list">
+          <li>Simplify parking discovery</li>
+          <li>Eliminate time wasted searching</li>
+          <li>Reduce traffic congestion</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mission-vision-card bg-light">
+        <div class="mission-icon">
+          <i class="bi bi-eye"></i>
+        </div>
+        <h3 class="fw-bold mb-4">Our Vision</h3>
+        <p class="mb-4">A future where finding and securing parking is seamless, where urban spaces are optimized, and
+          where the stress of parking is eliminated from the daily commute.</p>
+        <ul class="mission-list">
+          <li>Connected smart parking across Africa</li>
+          <li>Zero-friction parking experiences</li>
+          <li>Sustainable parking solutions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team Section -->
+<section class="container section-spacing">
+  <div class="text-center mb-5">
+    <p class="section-subtitle">Leadership</p>
+    <h2 class="display-5 fw-bold">Meet Our Innovators</h2>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-4 col-md-6">
+      <div class="team-member">
+        <img src="{{url_for('static', filename='img/team/team1.jpg')}}" alt="John Kibe - CEO & Founder"
+          class="img-fluid w-100">
+        <div class="member-info">
+          <span class="member-role">CEO & Founder</span>
+          <h3 class="h4 fw-bold text-white mb-2">John Kibe</h3>
+          <p class="mb-0 text-white-50">Visionary leader who transformed Nairobi's parking crisis into a pan-African
+            mobility solution.</p>
+          <div class="social-links-alt">
+            <a href="#" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" title="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="social-link" title="Email"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+      <div class="team-member">
+        <img src="{{url_for('static', filename='img/team/team2.jpg')}}" alt="Faith Joy - CTO" class="img-fluid w-100"
           loading="lazy">
-      </div>
-      <div class="col-md-6">
-        <h3 class="fw-bold">Our Mission</h3>
-        <p class="text-secondary">To provide a reliable, easy-to-use parking solution that saves time and enhances the
-          urban experience.</p>
-        <h3 class="fw-bold">Our Vision</h3>
-        <p class="text-secondary">We envision a future where finding and booking a parking space is a seamless,
-          stress-free experience for
-          everyone.</p>
-      </div>
-    </div>
-  </section>
-  <section class="py-5">
-    <div class="container">
-      <div class="row text-center mb-5">
-        <div class="col">
-          <h2 class="section-title">Why Choose EASY PARK</h2>
-          <p class="text-muted">Discover what makes us different</p>
-        </div>
-      </div>
-      <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-          <div class="feature-card p-4 h-100 shadow-sm border-0">
-            <div class="feature-icon mb-3">
-              <i class="bi bi-clock-history fs-1 text-warning"></i>
-            </div>
-            <h3 class="h5 fw-bold">Instant Booking</h3>
-            <p class="text-muted">Reserve your spot in seconds with our intuitive platform. Real-time availability
-              updates ensure you get the space you need.</p>
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <div class="feature-card p-4 h-100 shadow-sm border-0">
-            <div class="feature-icon mb-3">
-              <i class="bi bi-shield-check fs-1 text-warning"></i>
-            </div>
-            <h3 class="h5 fw-bold">Secure & Reliable</h3>
-            <p class="text-muted">Bank-grade security protects your transactions. 24/7 monitoring ensures parking lot
-              safety.</p>
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <div class="feature-card p-4 h-100 shadow-sm border-0">
-            <div class="feature-icon mb-3">
-              <i class="bi bi-currency-dollar fs-1 text-warning"></i>
-            </div>
-            <h3 class="h5 fw-bold">Best Prices</h3>
-            <p class="text-muted">Guaranteed competitive pricing with price match promise. No hidden fees or surprises.
-            </p>
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <div class="feature-card p-4 h-100 shadow-sm border-0">
-            <div class="feature-icon mb-3">
-              <i class="bi bi-headset fs-1 text-warning"></i>
-            </div>
-            <h3 class="h5 fw-bold">24/7 Support</h3>
-            <p class="text-muted">Dedicated customer service team available round-the-clock via chat, phone, or email.
-            </p>
+        <div class="member-info">
+          <span class="member-role">CTO</span>
+          <h3 class="h4 fw-bold text-white mb-2">Faith Joy</h3>
+          <p class="mb-0 text-white-50">Tech visionary with 8+ years architecting scalable parking platforms and AI
+            solutions.</p>
+          <div class="social-links-alt">
+            <a href="#" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" title="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="social-link" title="Email"><i class="fas fa-envelope"></i></a>
           </div>
         </div>
       </div>
     </div>
-  </section>
-  <section class="py-5 bg-light">
-    <div class="container">
-      <div class="row text-center mb-4">
-        <div class="col">
-          <h2 class="section-title">As Seen On</h2>
-          <p class="text-muted">Trusted by leading organizations and media outlets</p>
-        </div>
-      </div>
-      <div class="row g-4 align-items-center justify-content-center">
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/techcrunch.png') }}" alt="TechCrunch" class="img-fluid">
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/forbes.png') }}" alt="Forbes" class="img-fluid">
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/bloomberg.png') }}" alt="Bloomberg" class="img-fluid">
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/wired.png') }}" alt="Wired" class="img-fluid">
-          </div>
-        </div>
 
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/google.png')}}" alt="Google" class="img-fluid">
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="press-logo">
-            <img src="{{ url_for('static', filename='img/press/cnn.png') }}" alt="CNN" class="img-fluid">
+    <div class="col-lg-4 col-md-6">
+      <div class="team-member">
+        <img src="{{url_for('static', filename='img/team/team3.jpg')}}" alt="Emily Johnson - Marketing Lead"
+          class="img-fluid w-100" loading="lazy">
+        <div class="member-info">
+          <span class="member-role">Marketing Lead</span>
+          <h3 class="h4 fw-bold text-white mb-2">Emily Johnson</h3>
+          <p class="mb-0 text-white-50">Growth strategist driving 300% user acquisition since 2021 with innovative
+            campaigns.</p>
+          <div class="social-links-alt">
+            <a href="#" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link" title="Email"><i class="fab fa-instagram"></i></a>
           </div>
         </div>
       </div>
     </div>
-  </section>
-  <section class="team-section py-5 bg-light">
-    <div class="container">
-      <div class="row mb-5">
-        <div class="col text-center">
-          <h2 class="display-5 fw-bold mb-3 section-title">Meet Our Innovators</h2>
-          <p class="section-subtitle">The Visionaries Driving Parking Revolution</p>
-        </div>
+  </div>
+</section>
+
+<!-- Call to Action -->
+<section class="container mb-5 pb-5">
+  <div class="cta-container position-relative overflow-hidden rounded-4">
+    <div class="cta-bg-overlay"></div>
+    <div class="cta-content text-center text-white position-relative py-5 px-4">
+      <span class="cta-badge">Join Our Community</span>
+      <h2 class="display-5 fw-bold mt-3 mb-4">Ready to Transform Your Parking Experience?</h2>
+      <p class="lead mx-auto mb-5" style="max-width: 700px;">Join thousands of drivers who save time and eliminate
+        parking stress every day with EasyPark's innovative solutions.</p>
+
+      <div class="cta-buttons">
+        <a href="{{ url_for('main.signup') }}" class="btn btn-warning btn-lg px-5 py-3 me-3 fw-semibold">
+          <i class="bi bi-person-plus me-2"></i>Create Your Account
+        </a>
+        <a href="{{ url_for('main.plans') }}" class="btn btn-outline-light btn-lg px-5 py-3 fw-semibold">
+          <i class="bi bi-grid-3x3-gap me-2"></i>Explore Plans
+        </a>
       </div>
-      <div class="row g-4 justify-content-center">
-        <div class="col-lg-4 col-md-6">
-          <div class="team-card">
-            <div class="card-image">
-              <img src="{{url_for('static', filename='img/team/team1.jpg')}}" alt="John Kibe - CEO & Founder"
-                class="img-fluid">
-              <div class="social-links">
-                <a href="#" aria-label="LinkedIn" class="social-icon"><i class="fab fa-linkedin"></i></a>
-                <a href="#" aria-label="Twitter" class="social-icon"><i class="fab fa-twitter"></i></a>
-                <a href="#" aria-label="Mail" class="social-icon"><i class="fas fa-envelope"></i></a>
-              </div>
-            </div>
-            <div class="card-info">
-              <h3 class="member-name">John Kibe</h3>
-              <p class="member-role">CEO & Founder</p>
-              <div class="member-bio">
-                <p>Visionary leader who transformed Nairobi's parking crisis into a pan-African mobility solution
-                  serving 500,000+ drivers monthly.</p>
-              </div>
+
+      <div class="cta-features mt-5 pt-3">
+        <div class="row g-4 justify-content-center">
+          <div class="col-md-4">
+            <div class="cta-feature">
+              <i class="bi bi-clock"></i>
+              <span>Setup in under 2 minutes</span>
             </div>
           </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="team-card">
-            <div class="card-image">
-              <img src="{{url_for('static', filename='img/team/team2.jpg')}}" alt="Jane Smith - CTO" class="img-fluid"
-                loading="lazy">
-              <div class="social-links">
-                <a href="#" aria-label="LinkedIn" class="social-icon"><i class="fab fa-linkedin"></i></a>
-                <a href="#" aria-label="Twitter" class="social-icon"><i class="fab fa-twitter"></i></a>
-                <a href="#" aria-label="Mail" class="social-icon"><i class="fas fa-envelope"></i></a>
-              </div>
-            </div>
-            <div class="card-info">
-              <h3 class="member-name">Faith Joy</h3>
-              <p class="member-role">CTO</p>
-              <div class="member-bio">
-                <p>Tech visionary with 8+ years architecting scalable parking platforms. Led development of our
-                  AI-powered availability prediction system, reducing user search time by 65%.</p>
-              </div>
+          <div class="col-md-4">
+            <div class="cta-feature">
+              <i class="bi bi-shield-check"></i>
+              <span>Secure, hassle-free booking</span>
             </div>
           </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="team-card">
-            <div class="card-image">
-              <img src="{{url_for('static', filename='img/team/team3.jpg')}}" alt="Emily Johnson - Marketing Lead"
-                class="img-fluid" loading="lazy">
-              <div class="social-links">
-                <a href="#" aria-label="LinkedIn" class="social-icon"><i class="fab fa-linkedin"></i></a>
-                <a href="#" aria-label="Twitter" class="social-icon"><i class="fab fa-twitter"></i></a>
-                <a href="#" aria-label="Instagram" class="social-icon"><i class="fab fa-instagram"></i></a>
-              </div>
-            </div>
-            <div class="card-info">
-              <h3 class="member-name">Emily Johnson</h3>
-              <p class="member-role">Marketing Lead</p>
-              <div class="member-bio">
-                <p>Growth strategist driving 300% user acquisition since 2021. Pioneered our viral "Park Smart" campaign
-                  integrating behavioral psychology with urban mobility trends.</p>
-              </div>
+          <div class="col-md-4">
+            <div class="cta-feature">
+              <i class="bi bi-star"></i>
+              <span>30-day satisfaction guarantee</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-</main>
+  </div>
+</section>
 {% endblock %}
