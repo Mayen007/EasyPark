@@ -1,24 +1,475 @@
 {% extends 'base.html' %}
 {% block title %}Testimonials - Easy Park{% endblock %}
+
+{% block extra_head %}
+<style>
+    .testimonial-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url("{{ url_for('static', filename='img/hero-1.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 5rem 0 3rem;
+        /* margin-top: 4rem; */
+        position: relative;
+    }
+
+    .highlight-card {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .testimonial-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .testimonial-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .testimonial-rating {
+        color: var(--primary-color);
+    }
+
+    .testimonial-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .testimonial-header img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+        border: 3px solid var(--primary-color);
+    }
+
+    .testimonial-body {
+        font-style: italic;
+        position: relative;
+    }
+
+    .testimonial-body::before {
+        content: "“";
+        font-size: 5rem;
+        font-family: serif;
+        position: absolute;
+        left: -10px;
+        top: -40px;
+        opacity: 0.1;
+        color: var(--primary-color);
+    }
+
+    .client-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 3rem 0;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .stat-title {
+        font-weight: 600;
+        margin-top: 0.5rem;
+        color: var(--secondary-color);
+    }
+
+    .featured-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
+
+    .testimonial-filter {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        background: transparent;
+        border: 2px solid #eee;
+        border-radius: 30px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .filter-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: black;
+    }
+
+    .filter-btn:hover:not(.active) {
+        background: #f8f9fa;
+        border-color: #ddd;
+    }
+
+    @media (max-width: 768px) {
+        .testimonial-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .testimonial-header img {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+
+        .client-info {
+            margin-bottom: 1rem;
+        }
+
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<main class="container bg-white py-5 my-5">
-    <h2 class="section-title text-center my-4">What Our Customers Say</h2>
-    <div class="testimonials my-4">
-        <div class="testimonial">
-            <img src="{{url_for('static', filename='img/reviews/review1.jpg')}}" alt="U">
-            <p class="text">"Great service and support! Highly recommend!"</p>
-            <p class="name">- Alex Johnson</p>
-        </div>
-        <div class="testimonial">
-            <img src="{{url_for('static', filename='img/reviews/review2.jpg')}}" alt="User">
-            <p class="text">"Amazing experience, very satisfied with the results!"</p>
-            <p class="name">- Joshua Mike</p>
-        </div>
-        <div class="testimonial">
-            <img src="{{url_for('static', filename='img/reviews/review3.jpg')}}" alt="User">
-            <p class="text">"Fast and reliable service. Will use again!"</p>
-            <p class="name">- Michael Smith</p>
+<!-- Hero Section -->
+<section class="testimonial-hero text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Our Clients Love Us</h1>
+        <p class="lead mb-4">Don't take our word for it - hear what our customers have to say</p>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-number">5000+</div>
+                <div class="stat-title">Happy Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4.9</div>
+                <div class="stat-title">Average Rating</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">98%</div>
+                <div class="stat-title">Satisfaction Rate</div>
+            </div>
         </div>
     </div>
-</main>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <!-- Filter Buttons -->
+        <div class="testimonial-filter">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="personal">Personal Users</button>
+            <button class="filter-btn" data-filter="business">Business Users</button>
+            <button class="filter-btn" data-filter="premium">Premium</button>
+        </div>
+
+        <!-- Featured Testimonial -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card highlight-card p-4 mb-4">
+                    <div class="row g-0">
+                        <div class="col-md-2 text-center">
+                            <img src="{{url_for('static', filename='img/reviews/review1.jpg')}}"
+                                class="img-fluid rounded-circle border border-3 border-warning featured-img"
+                                alt="Featured Client" loading="lazy">
+                        </div>
+                        <div class="col-md-10">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h3 class="card-title fw-bold">Alex Johnson</h3>
+                                    <div class="testimonial-rating">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                                <h5 class="text-muted mb-3">Premium Member · Nairobi CBD</h5>
+                                <p class="card-text fs-5">"I've been using EasyPark for over a year now and it's been a
+                                    game-changer. Finding parking in the CBD used to be a nightmare, but now I book my
+                                    spot in seconds. The app is intuitive, the prices are fair, and customer service is
+                                    exceptional. I couldn't imagine going back to traditional parking methods!"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid Testimonials -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4" data-category="business">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review2.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">Joshua Mike</h4>
+                            <small class="text-muted">Business Account</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"Amazing experience, very satisfied with the results! The business plan saves our company
+                            thousands each month in parking fees."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-category="personal">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review3.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">Michael Smith</h4>
+                            <small class="text-muted">Personal Plan</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"Fast and reliable service. Will use again! I particularly love how I can book a spot even
+                            during peak hours."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-category="premium">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review5.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">Zawadi Gasira</h4>
+                            <small class="text-muted">Premium Member</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"The premium plan is worth every shilling! Reserved spots, priority booking, and the VIP
+                            service are exceptional."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-category="personal">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review7.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">David Wilson</h4>
+                            <small class="text-muted">Personal Plan</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"I use EasyPark daily for my commute to work. It's saved me countless hours of driving around
+                            looking for parking."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-category="business">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review4.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">Grace Muthoni</h4>
+                            <small class="text-muted">Business Account</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"Our company fleet managers love the dashboard and analytics. We've reduced parking costs by
+                            30% since switching."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-category="premium">
+                <div class="testimonial-card bg-white p-4">
+                    <div class="testimonial-header">
+                        <img src="{{url_for('static', filename='img/reviews/review6.jpg')}}" alt="User" loading="lazy">
+                        <div class="client-info">
+                            <h4 class="mb-0">James Omondi</h4>
+                            <small class="text-muted">Premium Member</small>
+                            <div class="testimonial-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-body">
+                        <p>"The extended hours access and guaranteed spots are perfect for my irregular work schedule.
+                            Worth the upgrade!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Testimonial CTA -->
+        <div class="text-center mt-5">
+            <h3 class="mb-3">Had a great experience with us?</h3>
+            <button class="btn btn-warning px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#testimonialModal">
+                Share Your Story
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonial Modal -->
+<div class="modal fade" id="testimonialModal" tabindex="-1" aria-labelledby="testimonialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testimonialModalLabel">Share Your Experience</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testimonialForm">
+                    <div class="mb-3">
+                        <label for="testimonialName" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="testimonialName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testimonialEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="testimonialEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating</label>
+                        <div class="rating-select">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="rating" id="rating1" value="1"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-warning" for="rating1">1</label>
+                                <input type="radio" class="btn-check" name="rating" id="rating2" value="2"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-warning" for="rating2">2</label>
+                                <input type="radio" class="btn-check" name="rating" id="rating3" value="3"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-warning" for="rating3">3</label>
+                                <input type="radio" class="btn-check" name="rating" id="rating4" value="4"
+                                    autocomplete="off">
+                                <label class="btn btn-outline-warning" for="rating4">4</label>
+                                <input type="radio" class="btn-check" name="rating" id="rating5" value="5"
+                                    autocomplete="off" checked>
+                                <label class="btn btn-outline-warning" for="rating5">5</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testimonialText" class="form-label">Your Testimonial</label>
+                        <textarea class="form-control" id="testimonialText" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="consent" required>
+                        <label class="form-check-label" for="consent">I agree to have my testimonial displayed on the
+                            website</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="submitTestimonial">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const testimonials = document.querySelectorAll('[data-category]');
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+
+            this.classList.add('active');
+
+            const filter = this.getAttribute('data-filter');
+
+            // Show/hide testimonials based on filter
+            testimonials.forEach(testimonial => {
+                if (filter === 'all' || testimonial.getAttribute('data-category') === filter) {
+                    testimonial.style.display = 'block';
+                } else {
+                    testimonial.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Handle testimonial submission
+    document.getElementById('submitTestimonial').addEventListener('click', function () {
+        const form = document.getElementById('testimonialForm');
+        if (form.checkValidity()) {
+            // Here you would typically send data to your backend
+            alert('Thank you for your testimonial! It will be reviewed and posted soon.');
+            $('#testimonialModal').modal('hide');
+            form.reset();
+        } else {
+            form.reportValidity();
+        }
+    });
+</script>
 {% endblock %}

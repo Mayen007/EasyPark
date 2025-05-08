@@ -282,151 +282,283 @@ footer {
   line-height: 1.6;
 }
 
-.pricing-card {
-  border-radius: 1rem;
+.plans-hero {
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("../img/hero-1.jpg") no-repeat center center;
+  background-size: cover;
+  background-position: center;
+  color: white;
+  padding: 5rem 0 2rem;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.pricing-switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.pricing-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  margin: 0 15px;
+}
+
+.pricing-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pricing-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.pricing-slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked+.pricing-slider {
+  background-color: var(--primary-color);
+}
+
+input:checked+.pricing-slider:before {
+  transform: translateX(26px);
+}
+
+.save-badge {
+  position: absolute;
+  top: -10px;
+  right: -20px;
+  background-color: var(--primary-color);
+  color: black;
+  font-weight: bold;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  transform: rotate(10deg);
+}
+
+.pricing-plan-card {
+  border-radius: 16px;
+  overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  position: relative;
+  border: none;
 }
 
-.pricing-card:hover {
-  transform: translateY(-10px);
-}
-
-.ribbon {
-  width: 150px;
-  height: 150px;
-  overflow: hidden;
-  position: absolute;
+.pricing-plan-card.popular {
+  transform: scale(1.05);
   z-index: 1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
-.ribbon span {
-  position: absolute;
-  display: block;
-  width: 225px;
-  padding: 8px 0;
-  background: var(--primary-color);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-  color: #fff;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  text-align: center;
-  right: -25px;
-  top: 30px;
-  transform: rotate(45deg);
+.pricing-plan-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
 }
 
-.bg-gradient-primary {
-  background: linear-gradient(90deg, var(--primary-color), #2c3e50);
-}
-
-.transition-all {
-  transition: all 0.3s ease;
-}
-
-.hover-shadow-lg:hover {
-  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-}
-
-.comparison-table {
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
+.pricing-plan-card.popular:hover {
+  transform: scale(1.05) translateY(-10px);
 }
 
 .plan-header {
-  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem 1.5rem;
+  text-align: center;
   position: relative;
 }
 
-.highlight-col {
-  background: rgba(245, 205, 5, 0.1) !important;
-  position: relative;
+.starter-header {
+  background-color: var(--primary-color);
+  color: black;
 }
 
-.highlight-col::after {
-  content: "";
+.premium-header {
+  background: linear-gradient(135deg, var(--primary-color), #ff8f00);
+  color: black;
+}
+
+.enterprise-header {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.plan-price {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 1rem 0;
+  font-family: var(--font-heading);
+}
+
+.plan-price span {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.plan-body {
+  padding: 2rem;
+  background-color: white;
+}
+
+.plan-feature {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+
+.plan-feature:last-child {
+  border-bottom: none;
+}
+
+.feature-icon {
+  width: 24px;
+  margin-right: 12px;
+  color: var(--primary-color);
+}
+
+.feature-text {
+  flex: 1;
+}
+
+.popular-badge {
   position: absolute;
   top: 0;
-  bottom: 0;
-  width: 3px;
+  right: 0;
   background: var(--primary-color);
-  right: -1px;
-}
-
-.badge {
-  font-size: 0.75rem;
+  color: black;
   font-weight: 600;
+  font-size: 0.7rem;
   padding: 0.5rem 1rem;
-  border-radius: 2rem;
+  border-bottom-left-radius: 16px;
+  z-index: 2;
 }
 
-.plan-header .badge {
-  position: absolute;
-  top: -1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary-color);
-  color: #000;
+.plan-cta {
+  margin-top: 1.5rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid #eee;
 }
 
-.price {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0.5rem 0;
+.plan-feature-tag {
+  display: inline-block;
+  background: rgba(255, 193, 7, 0.1);
+  color: var(--secondary-color);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 5px;
 }
 
-.price span {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
+.faq-section {
+  margin-top: 5rem;
+  padding: 3rem 0;
+  background-color: #f8f9fa;
+  border-radius: 16px;
 }
 
-.table tbody tr:hover {
-  background: rgba(0, 0, 0, 0.03);
+.accordion-button:not(.collapsed) {
+  background-color: var(--primary-color);
+  color: black;
 }
 
-.fa-car,
-.fa-shield-alt,
-.fa-clock,
-.fa-headset,
-.fa-star {
-  color: var(--primary-color);
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
 }
 
-.testimonials {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-}
-
-.testimonial {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 300px;
+.plan-comparison-cta {
   text-align: center;
-  transition: transform 0.3s ease-in-out;
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 16px;
 }
 
-.testimonial:hover {
-  transform: translateY(-5px);
+.not-sure-text {
+  max-width: 600px;
+  margin: 0 auto 1.5rem;
 }
 
-.testimonial img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-bottom: 10px;
+@media (max-width: 992px) {
+  .pricing-plan-card.popular {
+    transform: scale(1);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .pricing-plan-card.popular:hover {
+    transform: translateY(-10px);
+  }
 }
 
-.name {
-  font-weight: bold;
-  margin-top: 10px;
-  color: var(--primary-color);
+.annual-price {
+  display: none;
 }
 
-.text {
-  font-style: italic;
-  color: #555;
+/* Add to your styles.css for better mobile handling */
+@media (max-width: 768px) {
+  .hero-section {
+    height: 30vh;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    text-align: center !important;
+  }
+
+  .press-logos .row {
+    gap: 2rem;
+  }
+
+  .timeline-list li {
+    padding-bottom: 1rem;
+  }
+
+  .team-card {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .mission {
+    flex-direction: column-reverse;
+  }
+
+  .comparison-table {
+    font-size: 0.9rem;
+  }
+
+  .plan-header h5 {
+    font-size: 1rem;
+  }
+
+  .price {
+    font-size: 1.4rem;
+  }
+
+  .comparison-table .table td,
+  .comparison-table .table th {
+    padding: 0.5rem;
+  }
 }
