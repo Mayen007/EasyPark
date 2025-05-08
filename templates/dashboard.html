@@ -1,47 +1,680 @@
 {% extends "base.html" %}
-{% block title %}User Dashboard{% endblock %}
+{% block title %}Dashboard - Easy Park{% endblock %}
+
+{% block extra_head %}
+<style>
+  .dashboard-container {
+    background-color: #f8f9fa;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .dashboard-sidebar {
+    background-color: var(--secondary-color);
+    color: white;
+    min-height: calc(100vh - 160px);
+    padding: 2rem 0;
+    position: sticky;
+    top: 0;
+  }
+
+  .user-profile {
+    text-align: center;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+  }
+
+  .user-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    padding: 3px;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-menu {
+    list-style: none;
+    padding: 0 1.5rem;
+    margin: 0;
+  }
+
+  .sidebar-menu li {
+    margin-bottom: 0.5rem;
+  }
+
+  .sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    color: #eee;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .sidebar-menu a:hover,
+  .sidebar-menu a.active {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--primary-color);
+    transform: translateX(5px);
+  }
+
+  .sidebar-menu a.active {
+    border-left: 3px solid var(--primary-color);
+  }
+
+  .sidebar-menu i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+  }
+
+  .dashboard-content {
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .welcome-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .dashboard-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: none;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-card {
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+
+  .stat-icon i {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--secondary-color);
+  }
+
+  .stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .card-header-tabs {
+    margin-right: 0;
+    margin-bottom: -1px;
+    margin-left: 0;
+    border-bottom: none;
+  }
+
+  .nav-tabs .nav-link {
+    margin-bottom: -1px;
+    background: none;
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  .nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: #fff;
+    border-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+  }
+
+  .booking-item {
+    border-left: 4px solid var(--primary-color);
+    margin-bottom: 1rem;
+    transition: transform 0.3s;
+    cursor: pointer;
+  }
+
+  .booking-item:hover {
+    transform: translateX(5px);
+  }
+
+  .booking-location {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .booking-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  .status-badge {
+    border-radius: 30px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-confirmed {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+  }
+
+  .badge-pending {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+  }
+
+  .badge-cancelled {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+
+  .quick-action {
+    padding: 1rem;
+    text-align: center;
+    background: white;
+    border-radius: 15px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .quick-action:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+
+  .action-icon i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+
+  .action-label {
+    font-weight: 600;
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+  }
+
+  .recent-activity {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+
+  .activity-item:last-child {
+    border-bottom: none;
+  }
+
+  .activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+
+  .activity-icon i {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+  }
+
+  .activity-content {
+    flex: 1;
+  }
+
+  .activity-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .activity-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+
+  .payment-method {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+  }
+
+  .payment-method:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(255, 193, 7, 0.05);
+  }
+
+  .payment-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+  }
+
+  .payment-details {
+    flex: 1;
+  }
+
+  .payment-type {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .payment-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  .add-payment {
+    border: 1px dashed #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .add-payment:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(255, 193, 7, 0.05);
+  }
+
+  .add-payment i {
+    margin-right: 10px;
+    color: var(--primary-color);
+  }
+
+  @media (max-width: 992px) {
+    .dashboard-sidebar {
+      min-height: auto;
+      position: relative;
+    }
+
+    .welcome-text {
+      font-size: 1.5rem;
+    }
+
+    .dashboard-content {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<main class="container py-5 mt-4">
-  <h2 class="text-center mb-4 fw-bold display-4">User Dashboard</h2>
-  <div class="container my-5">
-    <h2 class="text-center mb-2">Welcome, {{ user.username }}</h2>
+<main class="container-fluid py-5 mt-4">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="dashboard-sidebar rounded-4">
+        <div class="user-profile">
+          <img src="{{ url_for('static', filename='img/default-avatar.jpg') }}" class="user-avatar" alt="User Avatar">
+          <h5 class="fw-bold mb-1">{{ user.fullname }}</h5>
+          <p class="text-light-50 small mb-0">{{ user.email }}</p>
+        </div>
 
-    <div class="card shadow-sm mb-4 border-0">
-      <div class="card-body">
-        <h5 class="card-title">Account Information</h5>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Selected Plan:</strong> {{ user.plan if user.plan else "None" }}</p>
+        <ul class="sidebar-menu">
+          <li>
+            <a href="#" class="active">
+              <i class="fas fa-home"></i>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="fas fa-ticket-alt"></i>
+              My Bookings
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="fas fa-map-marker-alt"></i>
+              Find Parking
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="fas fa-credit-card"></i>
+              Payment Methods
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="fas fa-car"></i>
+              My Vehicles
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="fas fa-cog"></i>
+              Settings
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('main.logout') }}" class="text-danger">
+              <i class="fas fa-sign-out-alt"></i>
+              Logout
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h5 class="card-title">Your Bookings</h5>
-        {% if bookings %}
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Slot</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for booking in bookings %}
-            <tr>
-              <td>{{ booking.location_id }}</td>
-              <td>{{ booking.check_in_date }}</td>
-              <td>{{ booking.check_in_time }}</td>
-              <td><span class="badge bg-success">{{ booking.status }}</span></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-        <p>No bookings yet.</p>
-        {% endif %}
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="dashboard-content">
+        <!-- Header with Welcome Message -->
+        <div class="dashboard-header">
+          <div>
+            <h1 class="welcome-text">Welcome back, {{ user.fullname.split()[0] }}!</h1>
+            <p class="text-muted">Here's what's happening with your parking today.</p>
+          </div>
+          <div>
+            <button class="btn btn-warning px-4">
+              <i class="fas fa-plus me-2"></i> New Booking
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-4">
+            <div class="dashboard-card stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-ticket-alt"></i>
+              </div>
+              <div class="stat-number">{{ bookings|length }}</div>
+              <div class="stat-label">Active Bookings</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="dashboard-card stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-car"></i>
+              </div>
+              <div class="stat-number">{{ user.plan|default('Free', true) }}</div>
+              <div class="stat-label">Current Plan</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="dashboard-card stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-coins"></i>
+              </div>
+              <div class="stat-number">0</div>
+              <div class="stat-label">Loyalty Points</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bookings Section -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="dashboard-card">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center p-3 border-0">
+                <h5 class="mb-0">Your Bookings</h5>
+                <a href="#" class="text-decoration-none">View All</a>
+              </div>
+              <div class="card-body">
+                <ul class="nav nav-tabs card-header-tabs" id="bookingTabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming"
+                      type="button" role="tab" aria-controls="upcoming" aria-selected="true">Upcoming</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button"
+                      role="tab" aria-controls="past" aria-selected="false">Past</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="canceled-tab" data-bs-toggle="tab" data-bs-target="#canceled"
+                      type="button" role="tab" aria-controls="canceled" aria-selected="false">Canceled</button>
+                  </li>
+                </ul>
+                <div class="tab-content mt-3" id="bookingTabsContent">
+                  <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                    {% if bookings %}
+                    {% for booking in bookings %}
+                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                    <div class="booking-item p-3 bg-light rounded">
+                      <div class="row align-items-center">
+                        <div class="col-md-5">
+                          <div class="booking-location">
+                            {% if booking.location_id == 1 %}
+                            CBD Public Parking, Kenyatta Avenue
+                            {% elif booking.location_id == 2 %}
+                            City Hall Parking, City Hall Way
+                            {% else %}
+                            Parking Spot #{{ booking.location_id }}
+                            {% endif %}
+                          </div>
+                          <div class="booking-time">
+                            {{ booking.check_in_date }} at {{ booking.check_in_time }}
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="booking-time">
+                            <i class="far fa-clock me-1"></i> {{ booking.check_in_time }} - {{ booking.check_out_time }}
+                          </div>
+                          <div class="booking-time">
+                            <i class="far fa-calendar-alt me-1"></i> {{ booking.check_in_date }}
+                          </div>
+                        </div>
+                        <div class="col-md-3 text-md-end">
+                          <span class="status-badge badge-{{ booking.status }}">
+                            {{ booking.status|title }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No bookings"
+                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <p class="text-muted">No upcoming bookings found</p>
+                      <a href="#" class="btn btn-sm btn-warning px-4">Book Now</a>
+                    </div>
+                    {% endif %}
+                  </div>
+                  <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+                    <div class="text-center py-4">
+                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No past bookings"
+                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <p class="text-muted">No past bookings found</p>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="canceled" role="tabpanel" aria-labelledby="canceled-tab">
+                    <div class="text-center py-4">
+                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No canceled bookings"
+                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <p class="text-muted">No canceled bookings found</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions and Recent Activity -->
+        <div class="row g-4">
+          <!-- Quick Actions -->
+          <div class="col-lg-6">
+            <div class="dashboard-card">
+              <div class="card-header bg-white p-3 border-0">
+                <h5 class="mb-0">Quick Actions</h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="quick-action">
+                      <div class="action-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                      </div>
+                      <div class="action-label">Find Parking</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="quick-action">
+                      <div class="action-icon">
+                        <i class="fas fa-history"></i>
+                      </div>
+                      <div class="action-label">Booking History</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="quick-action">
+                      <div class="action-icon">
+                        <i class="fas fa-car"></i>
+                      </div>
+                      <div class="action-label">Add Vehicle</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="quick-action">
+                      <div class="action-icon">
+                        <i class="fas fa-crown"></i>
+                      </div>
+                      <div class="action-label">Upgrade Plan</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="col-lg-6">
+            <div class="dashboard-card">
+              <div class="card-header bg-white p-3 border-0">
+                <h5 class="mb-0">Recent Activity</h5>
+              </div>
+              <div class="card-body px-3 recent-activity">
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i class="fas fa-sign-in-alt"></i>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-title">You logged into your account</div>
+                    <div class="activity-time">Just now</div>
+                  </div>
+                </div>
+                {% if bookings %}
+                {% for booking in bookings %}
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i class="fas fa-ticket-alt"></i>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-title">New booking created</div>
+                    <div class="activity-time">{{ booking.check_in_date }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-title">Account created</div>
+                    <div class="activity-time">Account creation date</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="dashboard-card">
+              <div class="card-header bg-white p-3 border-0">
+                <h5 class="mb-0">Payment Methods</h5>
+              </div>
+              <div class="card-body">
+                <div class="payment-method">
+                  <div class="payment-icon">
+                    <i class="fab fa-cc-visa fa-2x text-primary"></i>
+                  </div>
+                  <div class="payment-details">
+                    <div class="payment-type">Visa ending in 1234</div>
+                    <div class="payment-info">Expires 12/25</div>
+                  </div>
+                  <div>
+                    <span class="badge bg-success">Default</span>
+                  </div>
+                </div>
+                <div class="add-payment">
+                  <i class="fas fa-plus"></i> Add Payment Method
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
