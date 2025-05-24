@@ -4,7 +4,7 @@
 <style>
   body {
     background: url('../static/img/hero-1.jpg') no-repeat center center/cover;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
   }
@@ -32,13 +32,22 @@
       transform: translate(0, -15%);
     }
   }
+
+  @media screen and (min-width: 991px) {
+    body {
+      height: 100vh;
+    }
+
+    
+
+  }
 </style>
 {% endblock %}
 {% block content %}
 <main class="main-bg">
   <section class="hero flex-grow-1 text-light container d-flex flex-column justify-content-start align-items-left">
-    <h1 class="text-start display-3">Welcome to <span class="d-block my-3 display-1 fw-bold">EASY
-        <span class="text-warning">PARK</span></span></h1>
+    <h1 class="text-start display-3">Welcome to <span class="d-block my-3 display-1 fw-bold">EASY<span
+          class="text-warning">PARK</span></span></h1>
     <p class="text-start lead">Find and book a parking spot easily.</p>
   </section>
 
