@@ -1,0 +1,8 @@
+{
+  "name": "EasyPark",
+  "short_name": "EasyPark",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#141414",
+  "theme_color": "#ffc107"
+}

@@ -31,6 +31,150 @@ parkingLocations.forEach(parking => {
   locationSelect.appendChild(option);
 });
 
+// Add availability checking function
+function checkAvailability() {
+  const locationId = document.getElementById("location").value;
+  const checkInDate = document.getElementById("check-in-date").value;
+  const checkInTime = document.getElementById("check-in-time").value;
+  const checkOutDate = document.getElementById("check-out-date").value;
+  const checkOutTime = document.getElementById("check-out-time").value;
+
+  // Only check if all required fields are filled
+  if (!locationId || !checkInDate || !checkInTime || !checkOutDate || !checkOutTime) {
+    // Clear availability info if fields are empty
+    const availabilityDiv = document.getElementById("availability-info");
+    if (availabilityDiv) {
+      availabilityDiv.remove();
+    }
+    return;
+  }
+
+  // Show loading state
+  showAvailabilityLoading();
+
+  fetch("/api/check-availability", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location_id: parseInt(locationId),
+      check_in_date: checkInDate,
+      check_in_time: checkInTime,
+      check_out_date: checkOutDate,
+      check_out_time: checkOutTime
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        showAvailabilityError(data.error);
+      } else {
+        showAvailabilityResult(data);
+      }
+    })
+    .catch(error => {
+      console.error("Error checking availability:", error);
+      showAvailabilityError("Unable to check availability. Please try again.");
+    });
+}
+
+function showAvailabilityLoading() {
+  const availabilityDiv = getOrCreateAvailabilityDiv();
+  availabilityDiv.innerHTML = `
+    <div class="alert alert-info d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      Checking availability...
+    </div>
+  `;
+}
+
+function showAvailabilityResult(data) {
+  const availabilityDiv = getOrCreateAvailabilityDiv();
+  const bookButton = document.getElementById("book-button");
+
+  if (data.is_available) {
+    availabilityDiv.innerHTML = `
+      <div class="alert alert-success">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong><i class="fas fa-check-circle me-1"></i>Available!</strong>
+            <br><small>${data.available_slots} slots available</small>
+          </div>
+          <div class="text-end">
+            <strong>KES ${data.estimated_price}</strong>
+            <br><small>Estimated Price</small>
+          </div>
+        </div>
+        <hr class="my-2">
+        <div class="row">
+          <div class="col-6">
+            <small><strong>Hourly:</strong> KES ${data.hourly_rate}</small>
+          </div>
+          <div class="col-6">
+            <small><strong>Daily:</strong> KES ${data.daily_rate}</small>
+          </div>
+        </div>
+      </div>
+    `;
+    if (bookButton) bookButton.disabled = false;
+  } else {
+    availabilityDiv.innerHTML = `
+      <div class="alert alert-danger">
+        <strong><i class="fas fa-times-circle me-1"></i>No slots available</strong>
+        <br><small>for the selected time period</small>
+      </div>
+    `;
+    if (bookButton) bookButton.disabled = true;
+  }
+}
+
+function showAvailabilityError(errorMessage) {
+  const availabilityDiv = getOrCreateAvailabilityDiv();
+  const bookButton = document.getElementById("book-button");
+
+  availabilityDiv.innerHTML = `
+    <div class="alert alert-warning">
+      <strong><i class="fas fa-exclamation-triangle me-1"></i>Error</strong>
+      <br><small>${errorMessage}</small>
+    </div>
+  `;
+  if (bookButton) bookButton.disabled = true;
+}
+
+function getOrCreateAvailabilityDiv() {
+  let availabilityDiv = document.getElementById("availability-info");
+  if (!availabilityDiv) {
+    availabilityDiv = document.createElement("div");
+    availabilityDiv.id = "availability-info";
+    availabilityDiv.className = "mt-3";
+
+    // Insert after the form row
+    const formRow = document.querySelector("form .row");
+    if (formRow) {
+      formRow.insertAdjacentElement('afterend', availabilityDiv);
+    }
+  }
+  return availabilityDiv;
+}
+
+// Add event listeners for real-time availability checking
+if (document.getElementById("location")) {
+  document.getElementById("location").addEventListener("change", checkAvailability);
+}
+if (document.getElementById("check-in-date")) {
+  document.getElementById("check-in-date").addEventListener("change", checkAvailability);
+}
+if (document.getElementById("check-in-time")) {
+  document.getElementById("check-in-time").addEventListener("change", checkAvailability);
+}
+if (document.getElementById("check-out-date")) {
+  document.getElementById("check-out-date").addEventListener("change", checkAvailability);
+}
+if (document.getElementById("check-out-time")) {
+  document.getElementById("check-out-time").addEventListener("change", checkAvailability);
+}
+
 const bookNowBtn = document.querySelector(".book-now");
 const form = document.querySelector("form");
 
@@ -74,7 +218,12 @@ form.addEventListener("submit", function (event) {
     },
     body: JSON.stringify(bookingData)
   })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => Promise.reject(err));
+      }
+      return response.json();
+    })
     .then(data => {
       console.log("Booking successful:", data);
 
@@ -82,14 +231,27 @@ form.addEventListener("submit", function (event) {
       document.getElementById("modal-location").textContent = locationName;
       document.getElementById("modal-checkin").textContent = `${checkInDate} ${checkInTime}`;
       document.getElementById("modal-checkout").textContent = `${checkOutDate} ${checkOutTime}`;
-      document.getElementById("modal-promo").textContent = promoCode;
+      document.getElementById("modal-promo").textContent = promoCode || "None";
+
+      // Add booking reference and price to modal if elements exist
+      const modalReference = document.getElementById("modal-reference");
+      const modalPrice = document.getElementById("modal-price");
+      if (modalReference) modalReference.textContent = data.booking_reference;
+      if (modalPrice) modalPrice.textContent = `KES ${data.total_price}`;
 
       // Show the Bootstrap modal
       let bookingModal = new bootstrap.Modal(document.getElementById("bookingModal"));
       bookingModal.show();
+
+      // Clear the form and availability info after successful booking
+      form.reset();
+      const availabilityDiv = document.getElementById("availability-info");
+      if (availabilityDiv) availabilityDiv.remove();
     })
     .catch(error => {
       console.error("Error booking parking:", error);
+      // Show error message to user
+      alert(error.error || "Booking failed. Please try again.");
     })
     .finally(() => {
       // Hide spinner and re-enable the button regardless of outcome
@@ -99,6 +261,7 @@ form.addEventListener("submit", function (event) {
     });
 });
 
+// ...rest of your existing code...
 document.getElementById("signupForm").addEventListener("submit", function (e) {
   e.preventDefault();
   fetch("/signup", {
@@ -121,8 +284,8 @@ let timeout;
 function resetTimer() {
   clearTimeout(timeout);
   timeout = setTimeout(() => {
-    fetch("{{ url_for('main.logout') }}")
-      .then(() => window.location.href = "{{ url_for('main.login') }}");
+    fetch("/logout")
+      .then(() => window.location.href = "/login");
   }, inactivityTime);
 }
 

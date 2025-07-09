@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify, session, flash, render_template, url_for, redirect, get_flashed_messages
 from .forms import LoginForm, SignupForm
-from .models import db, ParkingSpot, Booking, User
+from .models import db, ParkingSpot, Booking, User, BookingStatus
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+import random
+import string
 
 
 main = Blueprint('main', __name__)
@@ -129,44 +131,186 @@ def signup():
 
 @main.route('/api/parking-spots', methods=['GET'])
 def get_parking_spots():
+    """Get all parking spots with availability info"""
+    check_in_date = request.args.get('check_in_date')
+    check_in_time = request.args.get('check_in_time')
+    check_out_date = request.args.get('check_out_date')
+    check_out_time = request.args.get('check_out_time')
+
     spots = ParkingSpot.query.all()
-    spots_list = [{'id': spot.id, 'name': spot.name,
-                   'location': spot.location} for spot in spots]
+    spots_list = []
+
+    for spot in spots:
+        spot_data = {
+            'id': spot.id,
+            'name': spot.name,
+            'location': spot.location,
+            'total_slots': spot.total_slots,
+            'hourly_rate': spot.hourly_rate,
+            'daily_rate': spot.daily_rate,
+            'security_features': spot.security_features,
+            'amenities': spot.amenities
+        }
+
+        # Add availability if date/time provided
+        if all([check_in_date, check_in_time, check_out_date, check_out_time]):
+            available_slots = spot.check_availability(
+                check_in_date, check_in_time, check_out_date, check_out_time)
+            estimated_price = spot.calculate_price(
+                check_in_date, check_in_time, check_out_date, check_out_time)
+            spot_data.update({
+                'available_slots': available_slots,
+                'estimated_price': estimated_price,
+                'is_available': available_slots > 0
+            })
+        else:
+            spot_data['available_slots'] = spot.available_slots
+
+        spots_list.append(spot_data)
+
     return jsonify(spots_list)
+
+
+@main.route('/api/check-availability', methods=['POST'])
+def check_availability():
+    """Check availability for specific parking spot and time"""
+    data = request.get_json()
+    location_id = data.get('location_id')
+    check_in_date = data.get('check_in_date')
+    check_in_time = data.get('check_in_time')
+    check_out_date = data.get('check_out_date')
+    check_out_time = data.get('check_out_time')
+
+    if not all([location_id, check_in_date, check_in_time, check_out_date, check_out_time]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    spot = ParkingSpot.query.get(location_id)
+    if not spot:
+        return jsonify({'error': 'Parking spot not found'}), 404
+
+    available_slots = spot.check_availability(
+        check_in_date, check_in_time, check_out_date, check_out_time)
+    estimated_price = spot.calculate_price(
+        check_in_date, check_in_time, check_out_date, check_out_time)
+
+    return jsonify({
+        'available_slots': available_slots,
+        'is_available': available_slots > 0,
+        'estimated_price': estimated_price,
+        'hourly_rate': spot.hourly_rate,
+        'daily_rate': spot.daily_rate
+    })
 
 
 @main.route('/api/book', methods=['POST'])
 def book():
+    """Create a new parking booking"""
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized: You must log in first."}), 401
+        return jsonify({'error': 'Please log in to make a booking'}), 401
 
     data = request.get_json()
+    location_id = data.get('location_id')
+    check_in_date = data.get('check_in_date')
+    check_in_time = data.get('check_in_time')
+    check_out_date = data.get('check_out_date')
+    check_out_time = data.get('check_out_time')
+    promo_code = data.get('promo_code', '')
 
-    required_fields = ['location_id', 'check_in_date',
-                       'check_in_time', 'check_out_date', 'check_out_time']
-    missing = [field for field in required_fields if not data.get(field)]
+    if not all([location_id, check_in_date, check_in_time, check_out_date, check_out_time]):
+        return jsonify({'error': 'Missing required booking information'}), 400
 
-    if missing:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+    # Validate parking spot exists
+    spot = ParkingSpot.query.get(location_id)
+    if not spot:
+        return jsonify({'error': 'Parking spot not found'}), 404
 
-    # Create and save a new booking
-    new_booking = Booking(
-        user_id=session['user_id'],
-        location_id=data['location_id'],
-        check_in_date=data['check_in_date'],
-        check_in_time=data['check_in_time'],
-        check_out_date=data['check_out_date'],
-        check_out_time=data['check_out_time'],
-        promo_code=data.get('promo_code'),
-        status="pending"
-    )
-    db.session.add(new_booking)
-    db.session.commit()
+    # Check availability
+    available_slots = spot.check_availability(
+        check_in_date, check_in_time, check_out_date, check_out_time)
+    if available_slots <= 0:
+        return jsonify({'error': 'No slots available for the selected time period'}), 400
 
-    return jsonify({
-        "message": "Booking successful",
-        "booking_id": new_booking.id
-    }), 200
+    # Calculate price
+    total_price = spot.calculate_price(
+        check_in_date, check_in_time, check_out_date, check_out_time)
+
+    # Apply promo code discount if valid
+    if promo_code:
+        discount = apply_promo_code(promo_code, total_price)
+        total_price = total_price * (1 - discount)
+
+    # Generate booking reference
+    booking_reference = 'EP' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+    # Create booking
+    try:
+        new_booking = Booking(
+            user_id=session['user_id'],
+            location_id=location_id,
+            check_in_date=check_in_date,
+            check_in_time=check_in_time,
+            check_out_date=check_out_date,
+            check_out_time=check_out_time,
+            promo_code=promo_code,
+            total_price=total_price,
+            booking_reference=booking_reference,
+            status=BookingStatus.CONFIRMED.value
+        )
+
+        db.session.add(new_booking)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Booking successful!',
+            'booking_reference': booking_reference,
+            'total_price': total_price,
+            'parking_spot': spot.name,
+            'location': spot.location
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Booking failed. Please try again.'}), 500
+
+
+def apply_promo_code(promo_code, total_price):
+    """Apply promo code discount"""
+    promo_codes = {
+        'FIRST10': 0.10,    # 10% off
+        'STUDENT15': 0.15,  # 15% off for students
+        'WEEKEND20': 0.20,  # 20% off for weekends
+        'LOYAL25': 0.25     # 25% off for loyal customers
+    }
+
+    return promo_codes.get(promo_code.upper(), 0)
+
+
+@main.route('/api/bookings', methods=['GET'])
+def get_user_bookings():
+    """Get current user's bookings"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Please log in'}), 401
+
+    bookings = Booking.query.filter_by(user_id=session['user_id']).order_by(
+        Booking.created_at.desc()).all()
+
+    bookings_list = []
+    for booking in bookings:
+        bookings_list.append({
+            'id': booking.id,
+            'booking_reference': booking.booking_reference,
+            'parking_spot': booking.parking_spot.name,
+            'location': booking.parking_spot.location,
+            'check_in_date': booking.check_in_date,
+            'check_in_time': booking.check_in_time,
+            'check_out_date': booking.check_out_date,
+            'check_out_time': booking.check_out_time,
+            'total_price': booking.total_price,
+            'status': booking.status,
+            'created_at': booking.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+
+    return jsonify(bookings_list)
 
 
 @main.route('/api/user-info')
@@ -216,3 +360,29 @@ def update_booking_status(booking_id):
         "booking_id": booking.id,
         "status": booking.status
     }), 200
+
+
+@main.route('/api/bookings/<int:booking_id>/cancel', methods=['PUT'])
+def cancel_booking(booking_id):
+    """Cancel a booking"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Please log in'}), 401
+
+    booking = Booking.query.filter_by(
+        id=booking_id, user_id=session['user_id']).first()
+    if not booking:
+        return jsonify({'error': 'Booking not found'}), 404
+
+    if booking.status == BookingStatus.CANCELED.value:
+        return jsonify({'error': 'Booking already canceled'}), 400
+
+    # Check if booking can be canceled (e.g., not past check-in time)
+    check_in_datetime = datetime.strptime(
+        f"{booking.check_in_date} {booking.check_in_time}", "%Y-%m-%d %H:%M")
+    if datetime.now() >= check_in_datetime:
+        return jsonify({'error': 'Cannot cancel booking after check-in time'}), 400
+
+    booking.status = BookingStatus.CANCELED.value
+    db.session.commit()
+
+    return jsonify({'message': 'Booking canceled successfully'})
