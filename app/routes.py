@@ -4,6 +4,7 @@ from .models import db, ParkingSpot, Booking, User, BookingStatus
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 import random
 import string
 import logging
@@ -350,8 +351,9 @@ def get_user_bookings():
         return jsonify({'error': 'Please log in'}), 401
 
     try:
-        bookings = Booking.query.filter_by(user_id=session['user_id']).order_by(
-            Booking.created_at.desc()).all()
+        bookings = Booking.query.filter_by(user_id=session['user_id']) \
+            .options(joinedload(Booking.parking_spot)) \
+            .order_by(Booking.created_at.desc()).all()
 
         bookings_list = []
         for booking in bookings:
@@ -416,7 +418,8 @@ def dashboard():
             session.clear()
             return redirect(url_for('main.login'))
 
-        bookings = Booking.query.filter_by(user_id=user_id).all()
+        bookings = Booking.query.filter_by(user_id=user_id) \
+            .options(joinedload(Booking.parking_spot)).all()
 
         return render_template('dashboard.html', user=user, bookings=bookings)
     except SQLAlchemyError as e:

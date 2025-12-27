@@ -550,10 +550,8 @@
                       <div class="row align-items-center">
                         <div class="col-md-5">
                           <div class="booking-location">
-                            {% if booking.location_id == 1 %} CBD Public
-                            Parking, Kenyatta Avenue {% elif booking.location_id
-                            == 2 %} City Hall Parking, City Hall Way {% else %}
-                            Parking Spot #{{ booking.location_id }} {% endif %}
+                            {{ booking.parking_spot.name }}, {{
+                            booking.parking_spot.location }}
                           </div>
                           <div class="booking-time">
                             {{ booking.check_in_date }} at {{
