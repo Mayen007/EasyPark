@@ -100,6 +100,8 @@ if (form) {
         document.getElementById("modal-checkin").textContent = `${checkInDate} ${checkInTime}`;
         document.getElementById("modal-checkout").textContent = `${checkOutDate} ${checkOutTime}`;
         document.getElementById("modal-promo").textContent = promoCode;
+        document.getElementById("modal-reference").textContent = data.booking_reference;
+        document.getElementById("modal-price").textContent = `KES ${data.total_price.toFixed(2)}`;
 
         // Show the Bootstrap modal
         let bookingModal = new bootstrap.Modal(document.getElementById("bookingModal"));
