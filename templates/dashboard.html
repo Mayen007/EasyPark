@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-{% block title %}Dashboard - Easy Park{% endblock %}
-
+{% extends "base.html" %} {% block title %}Dashboard - Easy Park{% endblock %}
 {% block extra_head %}
 <style>
   .dashboard-container {
@@ -360,16 +358,18 @@
     }
   }
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <main class="container-fluid py-5 mt-4">
   <div class="row">
     <!-- Sidebar -->
     <div class="col-lg-3">
       <div class="dashboard-sidebar rounded-4">
         <div class="user-profile">
-          <img src="{{ url_for('static', filename='img/avatar.jpg') }}" class="user-avatar" alt="User Avatar">
+          <img
+            src="{{ url_for('static', filename='img/avatar.jpg') }}"
+            class="user-avatar"
+            alt="User Avatar"
+          />
           <h5 class="fw-bold mb-1">{{ user.fullname }}</h5>
           <p class="text-light-50 small mb-0">{{ user.email }}</p>
         </div>
@@ -427,13 +427,20 @@
         <!-- Header with Welcome Message -->
         <div class="dashboard-header">
           <div>
-            <h1 class="welcome-text">Welcome back, {{ user.fullname.split()[0] }}!</h1>
-            <p class="text-muted">Here's what's happening with your parking today.</p>
+            <h1 class="welcome-text">
+              Welcome back, {{ user.fullname.split()[0] }}!
+            </h1>
+            <p class="text-muted">
+              Here's what's happening with your parking today.
+            </p>
           </div>
           <div>
-            <button class="btn btn-warning px-4">
+            <a
+              href="{{ url_for('main.home') }}#booking-form"
+              class="btn btn-warning px-4"
+            >
               <i class="fas fa-plus me-2"></i> New Booking
-            </button>
+            </a>
           </div>
         </div>
 
@@ -453,7 +460,9 @@
               <div class="stat-icon">
                 <i class="fas fa-car"></i>
               </div>
-              <div class="stat-number">{{ user.plan|default('Free', true) }}</div>
+              <div class="stat-number">
+                {{ user.plan|default('Free', true) }}
+              </div>
               <div class="stat-label">Current Plan</div>
             </div>
           </div>
@@ -472,52 +481,94 @@
         <div class="row mb-4">
           <div class="col-12">
             <div class="dashboard-card">
-              <div class="card-header bg-white d-flex justify-content-between align-items-center p-3 border-0">
+              <div
+                class="card-header bg-white d-flex justify-content-between align-items-center p-3 border-0"
+              >
                 <h5 class="mb-0">Your Bookings</h5>
                 <a href="#" class="text-decoration-none">View All</a>
               </div>
               <div class="card-body">
-                <ul class="nav nav-tabs card-header-tabs" id="bookingTabs" role="tablist">
+                <ul
+                  class="nav nav-tabs card-header-tabs"
+                  id="bookingTabs"
+                  role="tablist"
+                >
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming"
-                      type="button" role="tab" aria-controls="upcoming" aria-selected="true">Upcoming</button>
+                    <button
+                      class="nav-link active"
+                      id="upcoming-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#upcoming"
+                      type="button"
+                      role="tab"
+                      aria-controls="upcoming"
+                      aria-selected="true"
+                    >
+                      Upcoming
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button"
-                      role="tab" aria-controls="past" aria-selected="false">Past</button>
+                    <button
+                      class="nav-link"
+                      id="past-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#past"
+                      type="button"
+                      role="tab"
+                      aria-controls="past"
+                      aria-selected="false"
+                    >
+                      Past
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="canceled-tab" data-bs-toggle="tab" data-bs-target="#canceled"
-                      type="button" role="tab" aria-controls="canceled" aria-selected="false">Canceled</button>
+                    <button
+                      class="nav-link"
+                      id="canceled-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#canceled"
+                      type="button"
+                      role="tab"
+                      aria-controls="canceled"
+                      aria-selected="false"
+                    >
+                      Canceled
+                    </button>
                   </li>
                 </ul>
                 <div class="tab-content mt-3" id="bookingTabsContent">
-                  <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
-                    {% if bookings %}
-                    {% for booking in bookings %}
-                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                  <div
+                    class="tab-pane fade show active"
+                    id="upcoming"
+                    role="tabpanel"
+                    aria-labelledby="upcoming-tab"
+                  >
+                    {% if bookings %} {% for booking in bookings %} {% if
+                    booking.status == 'pending' or booking.status == 'confirmed'
+                    %}
                     <div class="booking-item p-3 bg-light rounded">
                       <div class="row align-items-center">
                         <div class="col-md-5">
                           <div class="booking-location">
-                            {% if booking.location_id == 1 %}
-                            CBD Public Parking, Kenyatta Avenue
-                            {% elif booking.location_id == 2 %}
-                            City Hall Parking, City Hall Way
-                            {% else %}
-                            Parking Spot #{{ booking.location_id }}
-                            {% endif %}
+                            {% if booking.location_id == 1 %} CBD Public
+                            Parking, Kenyatta Avenue {% elif booking.location_id
+                            == 2 %} City Hall Parking, City Hall Way {% else %}
+                            Parking Spot #{{ booking.location_id }} {% endif %}
                           </div>
                           <div class="booking-time">
-                            {{ booking.check_in_date }} at {{ booking.check_in_time }}
+                            {{ booking.check_in_date }} at {{
+                            booking.check_in_time }}
                           </div>
                         </div>
                         <div class="col-md-4">
                           <div class="booking-time">
-                            <i class="far fa-clock me-1"></i> {{ booking.check_in_time }} - {{ booking.check_out_time }}
+                            <i class="far fa-clock me-1"></i> {{
+                            booking.check_in_time }} - {{ booking.check_out_time
+                            }}
                           </div>
                           <div class="booking-time">
-                            <i class="far fa-calendar-alt me-1"></i> {{ booking.check_in_date }}
+                            <i class="far fa-calendar-alt me-1"></i> {{
+                            booking.check_in_date }}
                           </div>
                         </div>
                         <div class="col-md-3 text-md-end">
@@ -527,28 +578,50 @@
                         </div>
                       </div>
                     </div>
-                    {% endif %}
-                    {% endfor %}
-                    {% else %}
+                    {% endif %} {% endfor %} {% else %}
                     <div class="text-center py-4">
-                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No bookings"
-                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <img
+                        src="{{ url_for('static', filename='img/empty.svg') }}"
+                        alt="No bookings"
+                        style="max-width: 150px; opacity: 0.5"
+                        class="mb-3"
+                      />
                       <p class="text-muted">No upcoming bookings found</p>
-                      <a href="#" class="btn btn-sm btn-warning px-4">Book Now</a>
+                      <a href="#" class="btn btn-sm btn-warning px-4"
+                        >Book Now</a
+                      >
                     </div>
                     {% endif %}
                   </div>
-                  <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+                  <div
+                    class="tab-pane fade"
+                    id="past"
+                    role="tabpanel"
+                    aria-labelledby="past-tab"
+                  >
                     <div class="text-center py-4">
-                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No past bookings"
-                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <img
+                        src="{{ url_for('static', filename='img/empty.svg') }}"
+                        alt="No past bookings"
+                        style="max-width: 150px; opacity: 0.5"
+                        class="mb-3"
+                      />
                       <p class="text-muted">No past bookings found</p>
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="canceled" role="tabpanel" aria-labelledby="canceled-tab">
+                  <div
+                    class="tab-pane fade"
+                    id="canceled"
+                    role="tabpanel"
+                    aria-labelledby="canceled-tab"
+                  >
                     <div class="text-center py-4">
-                      <img src="{{ url_for('static', filename='img/empty.svg') }}" alt="No canceled bookings"
-                        style="max-width: 150px; opacity: 0.5;" class="mb-3">
+                      <img
+                        src="{{ url_for('static', filename='img/empty.svg') }}"
+                        alt="No canceled bookings"
+                        style="max-width: 150px; opacity: 0.5"
+                        class="mb-3"
+                      />
                       <p class="text-muted">No canceled bookings found</p>
                     </div>
                   </div>
@@ -617,12 +690,13 @@
                     <i class="fas fa-sign-in-alt"></i>
                   </div>
                   <div class="activity-content">
-                    <div class="activity-title">You logged into your account</div>
+                    <div class="activity-title">
+                      You logged into your account
+                    </div>
                     <div class="activity-time">Just now</div>
                   </div>
                 </div>
-                {% if bookings %}
-                {% for booking in bookings %}
+                {% if bookings %} {% for booking in bookings %}
                 <div class="activity-item">
                   <div class="activity-icon">
                     <i class="fas fa-ticket-alt"></i>
@@ -632,8 +706,7 @@
                     <div class="activity-time">{{ booking.check_in_date }}</div>
                   </div>
                 </div>
-                {% endfor %}
-                {% endif %}
+                {% endfor %} {% endif %}
                 <div class="activity-item">
                   <div class="activity-icon">
                     <i class="fas fa-user"></i>
