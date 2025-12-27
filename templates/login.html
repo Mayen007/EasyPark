@@ -1,52 +1,85 @@
-{% extends "base.html" %}
-{% block title %}Login - EASY PARK{% endblock %}
-{% block header %}{% endblock %}
-{% block content %}
-<main class="container-fluid bg-white p-3 min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="row p-0 align-items-center justify-content-center flex-wrap d-flex">
-        <div class="col-md-6 col-12">
-            <img src="{{ url_for('static', filename='img/login-concept.png') }}" alt="Illustration"
-                class="img-fluid w-100">
-        </div>
-        <div class="col-md-6 col-12">
-            <h2 class="text-uppercase fw-bold">Welcome to <span class="text-black">EASY <span
-                        class="text-warning">PARK</span></span></h2>
-            <p class="lead">Log in to book and manage your parking with ease.</p>
-
-
-            <form method="POST">
-                {{ form.hidden_tag() }} <!-- CSRF Token -->
-
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    {{ form.username(class="form-control", placeholder="Enter your username") }}
-                </div>
-
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    {{ form.password(class="form-control", placeholder="Enter your password") }}
-                </div>
-
-                <div class="mb-3 form-check">
-                    {{ form.remember(class="form-check-input") }}
-                    <label for="remember" class="form-check-label">Remember Me</label>
-                </div>
-
-                <div class="d-grid mb-3">
-                    {{ form.submit(class="btn btn-warning fw-bold text-uppercase") }}
-                </div>
-
-                <div class="text-left">
-                    <a href="#" class="text-decoration-none text-warning">Forgot Password?</a>
-                </div>
-
-                <div class="text-left">
-                    <p>Don't have an account? <a href="{{ url_for('main.signup') }}"
-                            class="text-decoration-none text-warning">Sign Up</a></p>
-                </div>
-            </form>
-        </div>
+{% extends "base.html" %} {% block title %}Login - EASY PARK{% endblock %} {%
+block header %}{% endblock %} {% block content %}
+<main
+  class="container-fluid bg-white p-3 min-vh-100 d-flex align-items-center justify-content-center"
+>
+  <div
+    class="row p-0 align-items-center justify-content-center flex-wrap d-flex"
+  >
+    <div class="col-md-6 col-12">
+      <img
+        src="{{ url_for('static', filename='img/login-concept.png') }}"
+        alt="Illustration"
+        class="img-fluid w-100"
+      />
     </div>
+    <div class="col-md-6 col-12">
+      <h2 class="text-uppercase fw-bold">
+        Welcome to
+        <span class="text-black"
+          >EASY <span class="text-warning">PARK</span></span
+        >
+      </h2>
+      <p class="lead">Log in to book and manage your parking with ease.</p>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <!-- CSRF Token -->
+
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          {{ form.username(class="form-control", placeholder="Enter your username") }}
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          {{ form.password(class="form-control", placeholder="Enter your password") }}
+        </div>
+
+        <div class="mb-3 form-check">
+          {{ form.remember(class="form-check-input") }}
+          <label for="remember" class="form-check-label">Remember Me</label>
+        </div>
+
+        <div class="d-grid mb-3">
+          {{ form.submit(class="btn btn-warning fw-bold text-uppercase") }}
+        </div>
+
+        <div class="text-left">
+          <a href="#" class="text-decoration-none text-warning"
+            >Forgot Password?</a
+          >
+        </div>
+
+        <div class="text-left">
+          <p>
+            Don't have an account?
+            <a
+              href="{{ url_for('main.signup') }}"
+              class="text-decoration-none text-warning"
+              >Sign Up</a
+            >
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
 </main>
-{% endblock %}
-{% block footer %} {% endblock %}
+{% endblock %} {% block footer %} {% endblock %}

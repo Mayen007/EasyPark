@@ -2,8 +2,10 @@ venv/
 .vercel
 logs/
 *.log
-__pycache__/
+app/__pycache__/
 *.pyc
 .env
-instance/
+instance/app.db
+*.sqlite3
+
 .DS_Store

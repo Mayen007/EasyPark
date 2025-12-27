@@ -51,15 +51,31 @@ const form = document.querySelector("form");
 
 if (form) {
   form.addEventListener("submit", function (event) {
+    // Get form elements
+    const locationElement = document.getElementById("location");
+    const checkInDateElement = document.getElementById("check-in-date");
+    const checkInTimeElement = document.getElementById("check-in-time");
+    const checkOutDateElement = document.getElementById("check-out-date");
+    const checkOutTimeElement = document.getElementById("check-out-time");
+    const promoCodeElement = document.getElementById("promo-code");
+
+    // Check if booking form elements exist (to avoid errors on other pages)
+    if (!locationElement || !checkInDateElement || !checkInTimeElement ||
+      !checkOutDateElement || !checkOutTimeElement) {
+      return; // Not a booking form, allow normal submission
+    }
+
+    // Only prevent default for booking forms
     event.preventDefault();
-    const locationId = document.getElementById("location").value;
+
+    const locationId = locationElement.value;
     const selectedLocation = parkingLocations.find(parking => parking.id == locationId);
     const locationName = selectedLocation ? selectedLocation.name : 'Unknown Location';
-    const checkInDate = document.getElementById("check-in-date").value;
-    const checkInTime = document.getElementById("check-in-time").value;
-    const checkOutDate = document.getElementById("check-out-date").value;
-    const checkOutTime = document.getElementById("check-out-time").value;
-    const promoCode = document.getElementById("promo-code").value;
+    const checkInDate = checkInDateElement.value;
+    const checkInTime = checkInTimeElement.value;
+    const checkOutDate = checkOutDateElement.value;
+    const checkOutTime = checkOutTimeElement.value;
+    const promoCode = promoCodeElement ? promoCodeElement.value : '';
 
     if (!locationId || !checkInDate || !checkInTime || !checkOutDate || !checkOutTime) {
       alert("Please fill in all required fields.");
@@ -70,6 +86,11 @@ if (form) {
     const bookButton = document.getElementById("book-button");
     const spinner = document.getElementById("spinner");
     const buttonText = document.getElementById("button-text");
+
+    if (!bookButton || !spinner || !buttonText) {
+      return; // Button elements not found, exit
+    }
+
     bookButton.disabled = true;
     spinner.classList.remove("d-none");
     buttonText.textContent = "Processing...";

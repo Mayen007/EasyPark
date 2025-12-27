@@ -91,8 +91,13 @@ def login():
             flash('An unexpected error occurred. Please try again.', 'danger')
             return redirect(url_for('main.login'))
 
-    if request.method == "POST":
-        flash('Login failed. Please check your details and try again.', 'warning')
+    # Show validation errors if form submission failed
+    if request.method == "POST" and form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'{field}: {error}', 'danger')
+        current_app.logger.warning(
+            f"Login form validation failed: {form.errors}")
 
     return render_template('login.html', form=form)
 
