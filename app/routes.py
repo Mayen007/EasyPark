@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session, flash, render_template, url_for, redirect, get_flashed_messages, current_app
 from .forms import LoginForm, SignupForm
-from .models import db, ParkingSpot, Booking, User, BookingStatus
+from .models import db, ParkingSpot, Booking, User, BookingStatus, PaymentStatus, Payment, PaymentLog
+from .services.mpesa_service import MpesaService
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,6 +9,7 @@ from sqlalchemy.orm import joinedload
 import random
 import string
 import logging
+import json
 
 
 main = Blueprint('main', __name__)
@@ -517,4 +519,311 @@ def cancel_booking(booking_id):
         db.session.rollback()
         current_app.logger.error(
             f"Unexpected error canceling booking: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+@main.route('/api/payment/initiate', methods=['POST'])
+def initiate_payment():
+    """Initiate M-Pesa payment for a booking"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Please log in'}), 401
+
+    try:
+        data = request.get_json()
+        booking_id = data.get('booking_id')
+        phone_number = data.get('phone_number')
+
+        if not booking_id or not phone_number:
+            return jsonify({'error': 'Booking ID and phone number are required'}), 400
+
+        # Get booking
+        booking = Booking.query.filter_by(
+            id=booking_id, user_id=session['user_id']).first()
+        if not booking:
+            return jsonify({'error': 'Booking not found'}), 404
+
+        # Check if booking is in correct status
+        if booking.payment_status not in [PaymentStatus.PENDING.value, PaymentStatus.FAILED.value]:
+            return jsonify({'error': f'Cannot initiate payment for booking with status {booking.payment_status}'}), 400
+
+        # Format phone number
+        user = User.query.get(session['user_id'])
+        formatted_phone = user.format_phone_for_mpesa(phone_number)
+        if not formatted_phone:
+            return jsonify({'error': 'Invalid phone number format. Use 07XXXXXXXX or 2547XXXXXXXX'}), 400
+
+        # Calculate amount (booking total price)
+        amount = booking.total_price
+
+        # Log payment attempt
+        booking.payment_attempts = (booking.payment_attempts or 0) + 1
+        booking.last_payment_attempt = datetime.utcnow()
+        booking.payment_phone_number = formatted_phone
+
+        # Create payment log entry
+        payment_log = PaymentLog(
+            booking_id=booking.id,
+            event_type='INITIATE',
+            status='PENDING',
+            message=f'Payment initiation attempt {booking.payment_attempts}',
+            request_data=json.dumps({
+                'phone_number': formatted_phone,
+                'amount': amount,
+                'booking_reference': booking.booking_reference
+            }),
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent', '')[:200]
+        )
+        db.session.add(payment_log)
+        db.session.commit()
+
+        # Initiate M-Pesa STK Push
+        mpesa = MpesaService()
+        result = mpesa.stk_push(
+            phone_number=formatted_phone,
+            amount=amount,
+            account_reference=booking.booking_reference,
+            transaction_desc=f'EasyPark Booking {booking.booking_reference}'
+        )
+
+        if result['success']:
+            # Update booking with M-Pesa request IDs
+            booking.checkout_request_id = result['checkout_request_id']
+            booking.merchant_request_id = result['merchant_request_id']
+            booking.payment_status = PaymentStatus.PENDING.value
+
+            # Update payment log
+            payment_log.status = 'SUCCESS'
+            payment_log.response_data = json.dumps(result)
+
+            db.session.commit()
+
+            current_app.logger.info(
+                f"Payment initiated for booking {booking.booking_reference}")
+
+            return jsonify({
+                'success': True,
+                'message': result['customer_message'],
+                'checkout_request_id': result['checkout_request_id']
+            }), 200
+        else:
+            # Update payment status to failed
+            booking.payment_status = PaymentStatus.FAILED.value
+            booking.payment_result_code = result.get('response_code', '')
+            booking.payment_result_desc = result.get('error', '')
+
+            # Update payment log
+            payment_log.status = 'FAILED'
+            payment_log.message = result.get(
+                'error', 'Payment initiation failed')
+            payment_log.response_data = json.dumps(result)
+
+            db.session.commit()
+
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Payment initiation failed')
+            }), 400
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error initiating payment: {str(e)}")
+        return jsonify({'error': 'Database error occurred'}), 500
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error initiating payment: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+@main.route('/api/mpesa/callback', methods=['POST'])
+def mpesa_callback():
+    """Handle M-Pesa payment callback"""
+    try:
+        callback_data = request.get_json()
+        current_app.logger.info(
+            f"M-Pesa callback received: {json.dumps(callback_data)}")
+
+        # Process callback
+        mpesa = MpesaService()
+        result = mpesa.process_callback(callback_data)
+
+        checkout_request_id = result.get('checkout_request_id')
+        if not checkout_request_id:
+            current_app.logger.error("No checkout_request_id in callback")
+            return jsonify({'ResultCode': 1, 'ResultDesc': 'Invalid callback data'}), 400
+
+        # Find booking by checkout_request_id
+        booking = Booking.query.filter_by(
+            checkout_request_id=checkout_request_id).first()
+        if not booking:
+            current_app.logger.error(
+                f"Booking not found for checkout_request_id: {checkout_request_id}")
+            return jsonify({'ResultCode': 1, 'ResultDesc': 'Booking not found'}), 404
+
+        # Log callback
+        payment_log = PaymentLog(
+            booking_id=booking.id,
+            event_type='CALLBACK',
+            status='SUCCESS' if result['success'] else 'FAILED',
+            message=result.get('result_desc', ''),
+            response_data=json.dumps(callback_data),
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent', '')[:200]
+        )
+        db.session.add(payment_log)
+
+        if result['success']:
+            # Payment successful
+            booking.payment_status = PaymentStatus.COMPLETED.value
+            booking.status = BookingStatus.CONFIRMED.value
+            booking.mpesa_receipt_number = result.get('mpesa_receipt_number')
+            booking.payment_date = result.get(
+                'transaction_date') or datetime.utcnow()
+            booking.payment_amount = result.get('amount')
+            booking.payment_result_code = result.get('result_code')
+            booking.payment_result_desc = result.get('result_desc')
+
+            # Create payment record
+            payment = Payment(
+                booking_id=booking.id,
+                mpesa_receipt_number=result.get('mpesa_receipt_number'),
+                checkout_request_id=checkout_request_id,
+                merchant_request_id=result.get('merchant_request_id'),
+                amount=result.get('amount'),
+                phone_number=result.get('phone_number'),
+                transaction_date=result.get(
+                    'transaction_date') or datetime.utcnow(),
+                payment_type='MPESA_STK',
+                status='COMPLETED',
+                result_code=result.get('result_code'),
+                result_desc=result.get('result_desc'),
+                raw_callback_data=json.dumps(callback_data)
+            )
+            db.session.add(payment)
+
+            # Reduce available slots
+            parking_spot = booking.parking_spot
+            if parking_spot and parking_spot.available_slots > 0:
+                parking_spot.available_slots -= 1
+
+            current_app.logger.info(
+                f"Payment completed for booking {booking.booking_reference}")
+        else:
+            # Payment failed
+            booking.payment_status = PaymentStatus.FAILED.value
+            booking.payment_result_code = result.get('result_code')
+            booking.payment_result_desc = result.get('result_desc')
+
+            current_app.logger.warning(
+                f"Payment failed for booking {booking.booking_reference}: {result.get('result_desc')}")
+
+        db.session.commit()
+
+        # Acknowledge callback
+        return jsonify({'ResultCode': 0, 'ResultDesc': 'Accepted'}), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error in M-Pesa callback: {str(e)}")
+        return jsonify({'ResultCode': 1, 'ResultDesc': 'Database error'}), 500
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error processing M-Pesa callback: {str(e)}")
+        return jsonify({'ResultCode': 1, 'ResultDesc': 'Server error'}), 500
+
+
+@main.route('/api/booking/<int:booking_id>/status', methods=['GET'])
+def get_booking_payment_status(booking_id):
+    """Get booking and payment status"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Please log in'}), 401
+
+    try:
+        booking = Booking.query.options(joinedload(Booking.parking_spot)).filter_by(
+            id=booking_id, user_id=session['user_id']).first()
+        if not booking:
+            return jsonify({'error': 'Booking not found'}), 404
+
+        # Query M-Pesa if payment is pending
+        if booking.payment_status == PaymentStatus.PENDING.value and booking.checkout_request_id:
+            mpesa = MpesaService()
+            query_result = mpesa.query_payment_status(
+                booking.checkout_request_id)
+
+            if query_result['success']:
+                # Update status based on query result
+                status = query_result.get('status')
+                if status == 'COMPLETED':
+                    booking.payment_status = PaymentStatus.COMPLETED.value
+                    booking.status = BookingStatus.CONFIRMED.value
+                elif status in ['FAILED', 'CANCELLED']:
+                    booking.payment_status = PaymentStatus.FAILED.value
+
+                booking.payment_result_code = query_result.get('result_code')
+                booking.payment_result_desc = query_result.get('result_desc')
+                db.session.commit()
+
+        return jsonify({
+            'booking_id': booking.id,
+            'booking_reference': booking.booking_reference,
+            'status': booking.status,
+            'payment_status': booking.payment_status,
+            'payment_result_desc': booking.payment_result_desc,
+            'total_price': booking.total_price,
+            'parking_spot': {
+                'name': booking.parking_spot.name,
+                'location': booking.parking_spot.location
+            } if booking.parking_spot else None,
+            'check_in_date': booking.check_in_date,
+            'check_in_time': booking.check_in_time,
+            'check_out_date': booking.check_out_date,
+            'check_out_time': booking.check_out_time
+        }), 200
+
+    except SQLAlchemyError as e:
+        current_app.logger.error(
+            f"Database error getting booking status: {str(e)}")
+        return jsonify({'error': 'Database error occurred'}), 500
+    except Exception as e:
+        current_app.logger.error(
+            f"Unexpected error getting booking status: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+@main.route('/api/booking/<int:booking_id>/retry-payment', methods=['POST'])
+def retry_payment(booking_id):
+    """Retry payment for a failed booking"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Please log in'}), 401
+
+    try:
+        data = request.get_json()
+        phone_number = data.get('phone_number')
+
+        if not phone_number:
+            return jsonify({'error': 'Phone number is required'}), 400
+
+        booking = Booking.query.filter_by(
+            id=booking_id, user_id=session['user_id']).first()
+        if not booking:
+            return jsonify({'error': 'Booking not found'}), 404
+
+        # Check if booking can retry payment
+        if booking.payment_status not in [PaymentStatus.PENDING.value, PaymentStatus.FAILED.value]:
+            return jsonify({'error': f'Cannot retry payment for booking with status {booking.payment_status}'}), 400
+
+        # Check payment attempts limit
+        if booking.payment_attempts and booking.payment_attempts >= 3:
+            return jsonify({'error': 'Maximum payment attempts reached. Please create a new booking.'}), 400
+
+        # Use the initiate_payment logic
+        request_data = {'booking_id': booking_id, 'phone_number': phone_number}
+        with current_app.test_request_context(json=request_data, method='POST'):
+            return initiate_payment()
+
+    except Exception as e:
+        current_app.logger.error(f"Error retrying payment: {str(e)}")
         return jsonify({'error': 'An unexpected error occurred'}), 500

@@ -1,11 +1,14 @@
 from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from dotenv import load_dotenv
 import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 
+# Load environment variables
+load_dotenv()
 
 db = SQLAlchemy()
 migrate = None
