@@ -1,2 +1,9 @@
 venv/
 .vercel
+logs/
+*.log
+__pycache__/
+*.pyc
+.env
+instance/
+.DS_Store
