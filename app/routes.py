@@ -308,7 +308,7 @@ def book():
     booking_reference = 'EP' + \
         ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
-    # Create booking
+    # Create booking with PENDING_PAYMENT status
     try:
         new_booking = Booking(
             user_id=session['user_id'],
@@ -320,22 +320,37 @@ def book():
             promo_code=promo_code,
             total_price=total_price,
             booking_reference=booking_reference,
-            status=BookingStatus.CONFIRMED.value
+            status=BookingStatus.PENDING.value,
+            payment_status=PaymentStatus.PENDING.value,
+            payment_attempts=0
         )
 
         db.session.add(new_booking)
         db.session.commit()
 
+        current_app.logger.info(
+            f"Booking created: {booking_reference} for user {session['user_id']}")
+
+        # Return booking info - frontend will initiate payment
         return jsonify({
-            'message': 'Booking successful!',
+            'success': True,
+            'message': 'Booking created. Please complete payment.',
+            'booking_id': new_booking.id,
             'booking_reference': booking_reference,
             'total_price': total_price,
             'parking_spot': spot.name,
-            'location': spot.location
-        })
+            'location': spot.location,
+            'requires_payment': True
+        }), 201
 
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error creating booking: {str(e)}")
+        return jsonify({'error': 'Booking failed. Please try again.'}), 500
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error creating booking: {str(e)}")
         return jsonify({'error': 'Booking failed. Please try again.'}), 500
 
 
@@ -502,6 +517,14 @@ def cancel_booking(booking_id):
             f"{booking.check_in_date} {booking.check_in_time}", "%Y-%m-%d %H:%M")
         if datetime.now() >= check_in_datetime:
             return jsonify({'error': 'Cannot cancel booking after check-in time'}), 400
+
+        # Restore parking slot if booking was confirmed and paid
+        if booking.status == BookingStatus.CONFIRMED.value and booking.payment_status == PaymentStatus.COMPLETED.value:
+            parking_spot = booking.parking_spot
+            if parking_spot:
+                parking_spot.available_slots += 1
+                current_app.logger.info(
+                    f"Restored slot for {parking_spot.name}, now {parking_spot.available_slots} available")
 
         booking.status = BookingStatus.CANCELED.value
         db.session.commit()
@@ -827,3 +850,61 @@ def retry_payment(booking_id):
     except Exception as e:
         current_app.logger.error(f"Error retrying payment: {str(e)}")
         return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+def cleanup_expired_bookings():
+    """
+    Clean up bookings that have been pending payment for more than 10 minutes.
+    This function should be called periodically (e.g., via a cron job or background task).
+    """
+    try:
+        expiry_time = datetime.utcnow() - timedelta(minutes=10)
+
+        # Find expired pending bookings
+        expired_bookings = Booking.query.filter(
+            Booking.payment_status == PaymentStatus.PENDING.value,
+            Booking.created_at < expiry_time
+        ).all()
+
+        for booking in expired_bookings:
+            booking.status = BookingStatus.CANCELED.value
+            booking.payment_status = PaymentStatus.EXPIRED.value
+            booking.payment_result_desc = 'Payment expired after 10 minutes'
+
+            current_app.logger.info(
+                f"Expired booking {booking.booking_reference} - no payment received")
+
+        if expired_bookings:
+            db.session.commit()
+            current_app.logger.info(
+                f"Cleaned up {len(expired_bookings)} expired bookings")
+
+        return len(expired_bookings)
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error cleaning up expired bookings: {str(e)}")
+        return 0
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error cleaning up expired bookings: {str(e)}")
+        return 0
+
+
+@main.route('/api/admin/cleanup-expired', methods=['POST'])
+def trigger_cleanup():
+    """
+    Admin endpoint to manually trigger cleanup of expired bookings.
+    In production, this should be secured with admin authentication.
+    """
+    try:
+        count = cleanup_expired_bookings()
+        return jsonify({
+            'success': True,
+            'message': f'Cleaned up {count} expired bookings'
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Error triggering cleanup: {str(e)}")
+        return jsonify({'error': 'Cleanup failed'}), 500
