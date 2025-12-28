@@ -114,7 +114,12 @@ if (form) {
     })
       .then(response => response.json())
       .then(data => {
-        console.log("Booking successful:", data);
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        console.log("Booking created:", data);
 
         // Update modal content with the booking details
         document.getElementById("modal-location").textContent = locationName;
@@ -124,12 +129,25 @@ if (form) {
         document.getElementById("modal-reference").textContent = data.booking_reference;
         document.getElementById("modal-price").textContent = `KES ${data.total_price.toFixed(2)}`;
 
+        // Show payment section if payment is required
+        if (data.requires_payment) {
+          const paymentSection = document.getElementById("payment-section");
+          paymentSection.classList.remove("d-none");
+
+          // Store booking ID for payment
+          paymentSection.dataset.bookingId = data.booking_id;
+
+          // Setup payment button handler
+          setupPaymentHandler();
+        }
+
         // Show the Bootstrap modal
         let bookingModal = new bootstrap.Modal(document.getElementById("bookingModal"));
         bookingModal.show();
       })
       .catch(error => {
         console.error("Error booking parking:", error);
+        alert("Booking failed. Please try again.");
       })
       .finally(() => {
         // Hide spinner and re-enable the button regardless of outcome
@@ -138,6 +156,160 @@ if (form) {
         buttonText.textContent = "Book Now";
       });
   });
+}
+
+// Payment handler
+function setupPaymentHandler() {
+  const payNowBtn = document.getElementById("pay-now-btn");
+  const paymentPhone = document.getElementById("payment-phone");
+  const paymentSection = document.getElementById("payment-section");
+
+  // Remove existing listeners
+  const newPayNowBtn = payNowBtn.cloneNode(true);
+  payNowBtn.parentNode.replaceChild(newPayNowBtn, payNowBtn);
+
+  newPayNowBtn.addEventListener("click", function () {
+    const phoneNumber = paymentPhone.value.trim();
+    const bookingId = paymentSection.dataset.bookingId;
+
+    if (!phoneNumber) {
+      alert("Please enter your M-Pesa phone number");
+      return;
+    }
+
+    // Validate phone number format
+    const phonePattern = /^(07|254)[0-9]{8,9}$/;
+    if (!phonePattern.test(phoneNumber)) {
+      alert("Invalid phone number format. Use 07XXXXXXXX or 2547XXXXXXXX");
+      return;
+    }
+
+    initiatePayment(bookingId, phoneNumber);
+  });
+}
+
+// Initiate M-Pesa payment
+function initiatePayment(bookingId, phoneNumber) {
+  const payNowBtn = document.getElementById("pay-now-btn");
+  const paySpinner = document.getElementById("pay-spinner");
+  const payText = document.getElementById("pay-text");
+  const paymentPhone = document.getElementById("payment-phone");
+
+  // Disable button and show spinner
+  payNowBtn.disabled = true;
+  paySpinner.classList.remove("d-none");
+  payText.textContent = "Initiating...";
+  paymentPhone.disabled = true;
+
+  fetch("/api/payment/initiate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      booking_id: bookingId,
+      phone_number: phoneNumber
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showPaymentStatus("info", "Payment request sent! Please check your phone and enter your M-Pesa PIN.");
+        showPaymentProgress(true);
+
+        // Start polling for payment status
+        pollPaymentStatus(bookingId, 0);
+      } else {
+        showPaymentStatus("danger", data.error || "Payment initiation failed. Please try again.");
+        resetPaymentButton();
+      }
+    })
+    .catch(error => {
+      console.error("Error initiating payment:", error);
+      showPaymentStatus("danger", "Network error. Please try again.");
+      resetPaymentButton();
+    });
+}
+
+// Poll payment status
+function pollPaymentStatus(bookingId, attempts) {
+  const maxAttempts = 10; // 10 attempts * 3 seconds = 30 seconds
+
+  if (attempts >= maxAttempts) {
+    showPaymentStatus("warning", "Payment is taking longer than expected. Please check your dashboard for booking status.");
+    showPaymentProgress(false);
+    resetPaymentButton();
+    return;
+  }
+
+  setTimeout(() => {
+    fetch(`/api/booking/${bookingId}/status`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          showPaymentStatus("danger", data.error);
+          showPaymentProgress(false);
+          resetPaymentButton();
+          return;
+        }
+
+        if (data.payment_status === "completed") {
+          showPaymentStatus("success", "✓ Payment successful! Your booking is confirmed.");
+          showPaymentProgress(false);
+          document.getElementById("payment-section").classList.add("d-none");
+          document.getElementById("modal-close-btn").textContent = "Done";
+        } else if (data.payment_status === "failed") {
+          showPaymentStatus("danger", `Payment failed: ${data.payment_result_desc || "Unknown error"}`);
+          showPaymentProgress(false);
+          resetPaymentButton();
+        } else if (data.payment_status === "pending") {
+          // Continue polling
+          pollPaymentStatus(bookingId, attempts + 1);
+        } else {
+          showPaymentStatus("warning", `Payment status: ${data.payment_status}`);
+          showPaymentProgress(false);
+          resetPaymentButton();
+        }
+      })
+      .catch(error => {
+        console.error("Error checking payment status:", error);
+        // Continue polling on error
+        pollPaymentStatus(bookingId, attempts + 1);
+      });
+  }, 3000); // Poll every 3 seconds
+}
+
+// Show payment status message
+function showPaymentStatus(type, message) {
+  const statusDiv = document.getElementById("payment-status");
+  const alertDiv = document.getElementById("payment-alert");
+
+  statusDiv.classList.remove("d-none");
+  alertDiv.className = `alert alert-${type}`;
+  alertDiv.textContent = message;
+}
+
+// Show/hide payment progress bar
+function showPaymentProgress(show) {
+  const progressDiv = document.getElementById("payment-progress");
+  if (show) {
+    progressDiv.classList.remove("d-none");
+  } else {
+    progressDiv.classList.add("d-none");
+  }
+}
+
+// Reset payment button
+function resetPaymentButton() {
+  const payNowBtn = document.getElementById("pay-now-btn");
+  const paySpinner = document.getElementById("pay-spinner");
+  const payText = document.getElementById("pay-text");
+  const paymentPhone = document.getElementById("payment-phone");
+
+  if (payNowBtn) payNowBtn.disabled = false;
+  if (paySpinner) paySpinner.classList.add("d-none");
+  if (payText) payText.textContent = "Pay with M-Pesa";
+  if (paymentPhone) paymentPhone.disabled = false;
 }
 
 // Signup form handler (only if form exists)
