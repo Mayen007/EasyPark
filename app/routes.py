@@ -601,7 +601,19 @@ def initiate_payment():
         db.session.commit()
 
         # Initiate M-Pesa STK Push
-        mpesa = MpesaService()
+        try:
+            mpesa = MpesaService()
+        except Exception as e:
+            current_app.logger.error(
+                f"Failed to initialize M-Pesa service: {str(e)}")
+            payment_log.status = 'FAILED'
+            payment_log.message = 'M-Pesa service not configured. Please contact support.'
+            db.session.commit()
+            return jsonify({
+                'success': False,
+                'error': 'Payment service not configured. Please contact support.'
+            }), 503
+
         result = mpesa.stk_push(
             phone_number=formatted_phone,
             amount=amount,

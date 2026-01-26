@@ -11,11 +11,11 @@ class BookingStatus(Enum):
 
 
 class PaymentStatus(Enum):
-    PENDING_PAYMENT = "pending_payment"
-    PAYMENT_CONFIRMED = "payment_confirmed"
-    PAYMENT_FAILED = "payment_failed"
-    PAYMENT_CANCELLED = "payment_cancelled"
-    PAYMENT_TIMEOUT = "payment_timeout"
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
     REFUND_REQUESTED = "refund_requested"
     REFUNDED = "refunded"
 
@@ -109,13 +109,14 @@ class User(UserMixin, db.Model):
     def name(self):
         return self.fullname
 
-    def format_phone_for_mpesa(self):
+    def format_phone_for_mpesa(self, phone_number=None):
         """Convert phone to M-Pesa format (254XXXXXXXXX)"""
-        if not self.phone_number:
+        phone_to_format = phone_number or self.phone_number
+        if not phone_to_format:
             return None
 
         # Remove spaces, dashes, etc.
-        phone = ''.join(filter(str.isdigit, self.phone_number))
+        phone = ''.join(filter(str.isdigit, phone_to_format))
 
         # Convert to 254 format
         if phone.startswith('0'):
@@ -149,7 +150,7 @@ class Booking(db.Model):
 
     # M-Pesa Payment Fields
     payment_status = db.Column(
-        db.String(20), default=PaymentStatus.PENDING_PAYMENT.value)
+        db.String(20), default=PaymentStatus.PENDING.value)
     payment_phone_number = db.Column(
         db.String(15), nullable=True)  # 254712345678
     checkout_request_id = db.Column(db.String(50), unique=True, nullable=True)

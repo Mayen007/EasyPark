@@ -149,6 +149,11 @@ class MpesaService:
                 'Content-Type': 'application/json'
             }
 
+            # Log sanitized payload for debugging
+            sanitized_payload = payload.copy()
+            sanitized_payload['Password'] = '***HIDDEN***'
+            current_app.logger.info(f"STK Push payload: {sanitized_payload}")
+
             current_app.logger.info(
                 f"Initiating STK Push for {phone_number}, amount: {amount}")
 
@@ -158,6 +163,18 @@ class MpesaService:
                 headers=headers,
                 timeout=30
             )
+
+            # Log response for debugging
+            current_app.logger.info(
+                f"M-Pesa STK Push response status: {response.status_code}")
+            try:
+                response_data = response.json()
+                current_app.logger.info(
+                    f"M-Pesa STK Push response: {response_data}")
+            except:
+                current_app.logger.error(
+                    f"M-Pesa STK Push response text: {response.text}")
+
             response.raise_for_status()
 
             data = response.json()

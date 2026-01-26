@@ -47,10 +47,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 const bookNowBtn = document.querySelector(".book-now");
-const form = document.querySelector("form");
+const bookingForm = document.getElementById("booking-form"); // More specific selector
 
-if (form) {
-  form.addEventListener("submit", function (event) {
+if (bookingForm) {
+  bookingForm.addEventListener("submit", function (event) {
+    // Only prevent default for booking form
+    event.preventDefault();
+
     // Get form elements
     const locationElement = document.getElementById("location");
     const checkInDateElement = document.getElementById("check-in-date");
@@ -59,14 +62,12 @@ if (form) {
     const checkOutTimeElement = document.getElementById("check-out-time");
     const promoCodeElement = document.getElementById("promo-code");
 
-    // Check if booking form elements exist (to avoid errors on other pages)
+    // Validate required elements exist
     if (!locationElement || !checkInDateElement || !checkInTimeElement ||
       !checkOutDateElement || !checkOutTimeElement) {
-      return; // Not a booking form, allow normal submission
+      alert("Form elements not found");
+      return;
     }
-
-    // Only prevent default for booking forms
-    event.preventDefault();
 
     const locationId = locationElement.value;
     const selectedLocation = parkingLocations.find(parking => parking.id == locationId);
