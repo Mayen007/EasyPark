@@ -29,6 +29,7 @@ class MpesaService:
         self.query_url = os.getenv(
             'MPESA_QUERY_URL', 'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query')
 
+        self.missing_credentials = []
         self._validate_credentials()
 
     def _validate_credentials(self):
@@ -41,19 +42,44 @@ class MpesaService:
             'MPESA_CALLBACK_URL': self.callback_url
         }
 
-        missing = [key for key, value in required.items() if not value]
-        if missing:
+        self.missing_credentials = [key for key,
+                                    value in required.items() if not value]
+        if self.missing_credentials:
             current_app.logger.warning(
-                f"Missing M-Pesa credentials: {', '.join(missing)}")
+                f"Missing M-Pesa credentials: {', '.join(self.missing_credentials)}")
+
+        # Warn if callback URL is still placeholder
+        if self.callback_url and 'your-ngrok-url' in self.callback_url:
+            current_app.logger.warning(
+                "M-Pesa callback URL is still set to placeholder. Update MPESA_CALLBACK_URL in .env file.")
+
+    def _extract_error_message(self, response):
+        """Extract a useful error message from a failed M-Pesa response."""
+        try:
+            data = response.json()
+            for key in ('errorMessage', 'error', 'message', 'ResponseDescription', 'ResponseDesc'):
+                value = data.get(key)
+                if value:
+                    return str(value)
+            return json.dumps(data)
+        except Exception:
+            return response.text.strip() or response.reason or 'Unknown M-Pesa error'
 
     def get_access_token(self):
         """
         Get OAuth access token from M-Pesa API
 
         Returns:
-            str: Access token if successful, None otherwise
+            dict: Success flag, token if available, and error details if not
         """
         try:
+            if self.missing_credentials:
+                return {
+                    'success': False,
+                    'error': f"Missing M-Pesa configuration: {', '.join(self.missing_credentials)}",
+                    'status_code': 503
+                }
+
             # Create basic auth credentials
             credentials = b64encode(
                 f"{self.consumer_key}:{self.consumer_secret}".encode()
@@ -64,7 +90,16 @@ class MpesaService:
             }
 
             response = requests.get(self.auth_url, headers=headers, timeout=30)
-            response.raise_for_status()
+
+            if response.status_code >= 400:
+                error_message = self._extract_error_message(response)
+                current_app.logger.error(
+                    f"M-Pesa auth error ({response.status_code}): {error_message}")
+                return {
+                    'success': False,
+                    'error': error_message,
+                    'status_code': response.status_code
+                }
 
             data = response.json()
             access_token = data.get('access_token')
@@ -72,18 +107,36 @@ class MpesaService:
             if access_token:
                 current_app.logger.info(
                     "M-Pesa access token obtained successfully")
-                return access_token
+                return {
+                    'success': True,
+                    'access_token': access_token,
+                    'status_code': response.status_code
+                }
             else:
-                current_app.logger.error("No access token in M-Pesa response")
-                return None
+                error_message = self._extract_error_message(response)
+                current_app.logger.error(
+                    f"No access token in M-Pesa response: {error_message}")
+                return {
+                    'success': False,
+                    'error': error_message or 'No access token in M-Pesa response',
+                    'status_code': response.status_code
+                }
 
         except requests.exceptions.RequestException as e:
             current_app.logger.error(f"M-Pesa auth error: {str(e)}")
-            return None
+            return {
+                'success': False,
+                'error': f'Network error while getting M-Pesa access token: {str(e)}',
+                'status_code': 503
+            }
         except Exception as e:
             current_app.logger.error(
                 f"Unexpected error getting M-Pesa token: {str(e)}")
-            return None
+            return {
+                'success': False,
+                'error': 'Unexpected error while getting M-Pesa access token',
+                'status_code': 500
+            }
 
     def _generate_password(self):
         """
@@ -118,30 +171,54 @@ class MpesaService:
                 - error (str): Error message if failed
         """
         try:
-            # Get access token
-            access_token = self.get_access_token()
-            if not access_token:
+            if self.missing_credentials:
                 return {
                     'success': False,
-                    'error': 'Failed to get M-Pesa access token'
+                    'error': f"Missing M-Pesa configuration: {', '.join(self.missing_credentials)}",
+                    'status_code': 503
                 }
+
+            # Validate phone number format
+            if not phone_number or not str(phone_number).startswith('254') or len(str(phone_number)) != 12:
+                return {
+                    'success': False,
+                    'error': 'Invalid phone number format. Must be 254XXXXXXXXX (12 digits)'
+                }
+
+            # Validate amount
+            if not amount or float(amount) <= 0:
+                return {
+                    'success': False,
+                    'error': 'Invalid amount. Must be greater than 0'
+                }
+            # Get access token
+            access_token_result = self.get_access_token()
+            if not access_token_result.get('success'):
+                return {
+                    'success': False,
+                    'error': access_token_result.get('error', 'Failed to get M-Pesa access token'),
+                    'status_code': access_token_result.get('status_code', 503)
+                }
+            access_token = access_token_result['access_token']
 
             # Generate password and timestamp
             password, timestamp = self._generate_password()
 
             # Prepare request payload
+            # Ensure all values are properly formatted
             payload = {
-                'BusinessShortCode': self.business_shortcode,
+                'BusinessShortCode': str(self.business_shortcode),
                 'Password': password,
                 'Timestamp': timestamp,
                 'TransactionType': 'CustomerPayBillOnline',
-                'Amount': int(amount),  # M-Pesa expects integer
-                'PartyA': phone_number,
-                'PartyB': self.business_shortcode,
-                'PhoneNumber': phone_number,
+                'Amount': int(float(amount)),  # M-Pesa expects integer
+                'PartyA': str(phone_number),
+                'PartyB': str(self.business_shortcode),
+                'PhoneNumber': str(phone_number),
                 'CallBackURL': self.callback_url,
-                'AccountReference': account_reference,
-                'TransactionDesc': transaction_desc
+                # Max 20 chars
+                'AccountReference': str(account_reference)[:20],
+                'TransactionDesc': str(transaction_desc)[:13]  # Max 13 chars
             }
 
             headers = {
@@ -175,7 +252,18 @@ class MpesaService:
                 current_app.logger.error(
                     f"M-Pesa STK Push response text: {response.text}")
 
-            response.raise_for_status()
+            # Check for errors before raising
+            if response.status_code >= 400:
+                error_msg = self._extract_error_message(response)
+                current_app.logger.error(
+                    f"M-Pesa API Error ({response.status_code}): {error_msg}")
+
+                return {
+                    'success': False,
+                    'error': f'M-Pesa API error ({response.status_code}): {error_msg}',
+                    'status_code': response.status_code,
+                    'provider_response': error_msg
+                }
 
             data = response.json()
 
@@ -199,7 +287,9 @@ class MpesaService:
                 return {
                     'success': False,
                     'error': data.get('ResponseDescription', 'Payment request failed'),
-                    'response_code': response_code
+                    'response_code': response_code,
+                    'status_code': response.status_code,
+                    'provider_response': data
                 }
 
         except requests.exceptions.RequestException as e:
@@ -207,13 +297,15 @@ class MpesaService:
                 f"M-Pesa STK Push request error: {str(e)}")
             return {
                 'success': False,
-                'error': f'Network error: {str(e)}'
+                'error': f'Network error: {str(e)}',
+                'status_code': 503
             }
         except Exception as e:
             current_app.logger.error(f"Unexpected error in STK Push: {str(e)}")
             return {
                 'success': False,
-                'error': 'An unexpected error occurred'
+                'error': 'An unexpected error occurred',
+                'status_code': 500
             }
 
     def query_payment_status(self, checkout_request_id):

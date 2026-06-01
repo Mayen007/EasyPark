@@ -657,8 +657,9 @@ def initiate_payment():
 
             return jsonify({
                 'success': False,
-                'error': result.get('error', 'Payment initiation failed')
-            }), 400
+                'error': result.get('error', 'Payment initiation failed'),
+                'provider_response': result.get('provider_response')
+            }), result.get('status_code', 502)
 
     except SQLAlchemyError as e:
         db.session.rollback()

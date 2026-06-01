@@ -9,3 +9,6 @@ instance/app.db
 *.sqlite3
 
 .DS_Store
+
+.vscode/
+.idea/
